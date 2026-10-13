@@ -11,3 +11,4 @@ __pycache__/
 artifacts/
 models/
 .DS_Store
+/token_auction_codex_starter.zip

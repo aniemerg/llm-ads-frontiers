@@ -1,0 +1,16 @@
+test_concrete_threshold_fixture (test_auction.AuctionTests.test_concrete_threshold_fixture) ... ok
+test_expected_payment_known_value_positive (test_auction.AuctionTests.test_expected_payment_known_value_positive) ... ok
+test_fixed_prefix_probability_monotonicity (test_auction.AuctionTests.test_fixed_prefix_probability_monotonicity) ... ok
+test_fixed_tape_single_switch_for_each_bidder (test_auction.AuctionTests.test_fixed_tape_single_switch_for_each_bidder) ... ok
+test_identical_distributions_are_always_free (test_auction.AuctionTests.test_identical_distributions_are_always_free) ... ok
+test_invalid_inputs (test_auction.AuctionTests.test_invalid_inputs) ... ok
+test_monte_carlo_distribution_payments_and_bounds (test_auction.AuctionTests.test_monte_carlo_distribution_payments_and_bounds) ... ok
+test_normalization_and_endpoints (test_auction.AuctionTests.test_normalization_and_endpoints) ... ok
+test_scale_invariance_and_linear_price_scaling (test_auction.AuctionTests.test_scale_invariance_and_linear_price_scaling) ... ok
+test_shared_branch_is_free (test_auction.AuctionTests.test_shared_branch_is_free) ... ok
+test_single_bidder_pays_zero (test_auction.AuctionTests.test_single_bidder_pays_zero) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.295s
+
+OK
