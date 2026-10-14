@@ -41,3 +41,5 @@
 .response-ad.branch-B{background:var(--b-soft);color:var(--b)}
 .live-step-charges>div:first-child strong{color:var(--a)}
 .live-step-charges>div:last-child strong{color:var(--b)}
+
+.prompt-actions{justify-content:flex-end;gap:8px;margin:0 0 14px}.prompt-actions button{font-size:12px;padding:9px 14px}
