@@ -32,7 +32,7 @@ function form(){
 
 export async function mountLive(){
   mounted=true;
-  $('#content').innerHTML=`<div class="live-toolbar"><h1>Ads in LLMs.</h1><nav class="app-nav" aria-label="Pages"><a href="#live" aria-current="page">Generate</a><a href="#decode">Decode</a></nav><div id="live-status" role="status" aria-live="polite"><span class="spinner"></span> Connecting to the local model service…</div><div class="controls"><button id="live-stop" hidden>Stop generation</button></div></div><div id="live-form"></div><div id="live-notice" role="alert"></div><div id="live-output"></div><div id="live-inspector"></div><div id="live-provenance"></div>`;
+  $('#content').innerHTML=`<div class="live-toolbar"><h1>Ads in LLMs.</h1><nav class="app-nav" aria-label="Pages"><a href="#live" aria-current="page">Generate</a><a href="#decode">Decode</a></nav><div id="live-status" role="status" aria-live="polite"><span class="spinner"></span> Connecting to the local model service…</div><div class="controls"><button id="live-stop" hidden>Stop generation</button></div></div><div id="live-form"></div><div id="live-notice" role="alert"></div><div id="live-output"></div><div id="live-inspector"></div><div id="live-provenance"></div><div id="live-diagnostics"></div>`;
   $('#live-stop').addEventListener('click',stopRun);
   if(state.inputs){renderForm();renderStatus();renderOutput();}
   try{
@@ -176,10 +176,15 @@ function renderStatus(){
     'no-ad-generating':`Generating the separate no-ad answer · ${(state.noAd&&state.noAd.events||[]).length} tokens · inputs locked`,
     'no-ad-validating':'Checking the no-ad answer cache · inputs locked',complete:'Complete · submit when you’re ready',
     stopped:'Stopped by you · output and charges preserved',
-    error:'Run failed · edit an input, then press Submit',invalid:'Waiting for valid inputs',
+    error:state.events.length?'Response available · diagnostics below':'Run error · diagnostics below',invalid:'Waiting for valid inputs',
     'connection-error':'Local service unavailable · reload to reconnect'};
   $('#live-status').innerHTML=`${busy||state.status==='connecting'?'<span class="spinner"></span>':'<span class="status-dot"></span>'}<span>${esc(busy&&state.stopRequested?'Stopping after the current operation · inputs locked':captions[state.status]||state.status)}</span>`;
-  $('#live-notice').innerHTML=state.error?`<div class="callout warning"><strong>${state.status==='error'?'This run did not validate.':'Please check this input.'}</strong><pre class="live-error">${esc(state.error)}</pre>${state.events.length?'<p>The generated tokens and charges below are preserved as a failed live attempt.</p>':''}</div>`:'';
+  $('#live-notice').innerHTML=state.error&&state.status==='invalid'?`<div class="callout warning"><strong>Please check this input.</strong><p>${esc(state.error)}</p></div>`:'';
+  // Background diagnostics stay collapsed below the result, outside alert/live regions.
+  // Updating this notice must never move focus or scroll the page.
+  const diagnostics=state.error&&state.status!=='invalid'?`<details><summary>Run diagnostics</summary>${state.events.length?'<p class="small muted">Generated text and charges are preserved. Watermark decoding checks the text independently of model cache validation.</p>':''}<pre class="live-error">${esc(state.error)}</pre></details>`:'';
+  const target=$('#live-diagnostics');
+  if(target.innerHTML!==diagnostics)target.innerHTML=diagnostics;
 }
 
 function renderOutput(){
