@@ -37,8 +37,8 @@ class RoundConfig:
 
     def __post_init__(self):
         validate_continuation(self.continuation_tokens, self.continuation_threshold)
-        if self.watermark and (self.baseline or self.continuation_tokens or len(self.watermark_brands) != 2):
-            raise ValueError("Watermark mode requires two brands, positive total bids, and continuation off.")
+        if self.watermark and (self.baseline or len(self.watermark_brands) != 2):
+            raise ValueError("Watermark mode requires two brands and positive total bids.")
         if self.baseline and self.continuation_tokens:
             raise ValueError("The no-ad baseline cannot grant advertiser continuation.")
         if not all(math.isfinite(b) and b >= 0 for b in (self.bid_a, self.bid_b)):
@@ -154,7 +154,7 @@ def run_round(
         "continuation_policy": {
             "max_extra_tokens": config.continuation_tokens,
             "confidence_threshold": config.continuation_threshold,
-            "probabilities": "After the configured temperature, over the full vocabulary.",
+            "probabilities": "Original model probabilities after temperature, before watermark adjustment, over the full vocabulary.",
             "payment": "No additional charge for carried tokens.",
             "rule": "A contested winner may emit the unique token meeting the confidence threshold. "
                 "Recheck at each prefix; stop at the first miss or the extra-token limit. "
@@ -184,7 +184,12 @@ def run_round(
         from token_auction_lab.watermark import Encoder, profile, coded_distributions, sample, mixture_tv, decode_response
         encoder = Encoder(config.watermark_brands)
         manifest["watermark"] = profile()
-        manifest["sampler"] = "experimental_tilt_race"
+        manifest["sampler"] = ("experimental_tilt_race_with_winner_continuation"
+                               if config.continuation_tokens else "experimental_tilt_race")
+        manifest["watermark"]["continuation_policy"] = (
+            "raw_confidence_first_v1; carried tokens bypass watermark sampling and cost zero. "
+            "Fixed block positions advance on every token; decoding scores all final-text tokens. "
+            "Recovery and false positives for the combined mode are not calibrated.")
         manifest["watermark"]["brands"] = list(encoder.brands)
         manifest["watermark"]["schedule"] = "FIFO exact mentions, aligned 64-token blocks; abstain after alignment failure."
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
@@ -208,6 +213,7 @@ def run_round(
     text = ""
     continuation = WinnerContinuation(config.continuation_tokens, config.continuation_threshold)
     carried_tokens = 0
+    carried_steps = []
     with (output / "events.jsonl").open("w") as trace:
         for step in range(config.max_tokens):
             if should_stop and should_stop():
@@ -227,14 +233,18 @@ def run_round(
                 event["selected_probabilities"] = {"p": float(p[selected])}
             else:
                 raw_a, raw_b = distributions
-                payload = encoder.at_step(step, decoder.generated, text) if encoder else None
-                p_a, p_b = coded_distributions(distributions, payload, step) if encoder else distributions
+                block = encoder.at_step(step, decoder.generated, text) if encoder else None
+                # Continuation is decided on raw model confidence before any watermark tilt.
+                carried = continuation.take(raw_a, raw_b)
+                payload = None if carried else block
+                p_a, p_b = coded_distributions(distributions, payload, step) if payload else distributions
                 auction = TwoBidderAuction(p_a, p_b)
-                carried = continuation.take(p_a, p_b)
                 if carried:
                     allocation, carry_info = carried
                     tape = None
                     carried_tokens += 1
+                    carried_steps.append(step)
+                    carry_info["probability_basis"] = "raw_model_after_temperature_before_watermark"
                 else:
                     tape = RandomTape.draw(rng)
                     allocation = (sample(distributions, (config.bid_a, config.bid_b), tape, payload, step)
@@ -277,6 +287,8 @@ def run_round(
                 }
                 if encoder:
                     event["watermark"] = payload
+                    event["watermark_block"] = block
+                    event["watermark_skip_reason"] = "winner_continuation" if carried and block else None
                     event["watermark_mixture_tv"] = mixture_tv(distributions, (p_a, p_b), (config.bid_a, config.bid_b))
                     raw_q = (config.bid_a * raw_a + config.bid_b * raw_b) / (config.bid_a + config.bid_b)
                     event["selected_probabilities"].update(
@@ -356,6 +368,11 @@ def run_round(
         if encoder:
             visible = decoder.generated[:-1] if decoder.generated and decoder.generated[-1] in eos_ids(model, tokenizer) else decoder.generated
             audit = encoder.finish(text, visible)
+            audit["carried_steps"] = carried_steps
+            audit["block_position_policy"] = "All final-text tokens, including carried tokens, keep their absolute positions and are scored by the decoder."
+            for record in audit.get("records", []):
+                record["carried_steps"] = [s for s in carried_steps
+                    if record["carrier_start"] <= s < min(record["carrier_end"], len(visible))]
             decoded = decode_response(text) if text else {"status": "insufficient_evidence", "spans": [], "coverage": "unknown"}
             watermark_result = {"audit": audit, "decoded": decoded}
             (output / "watermark.json").write_text(json.dumps(audit, indent=2, ensure_ascii=False) + "\n")

@@ -148,8 +148,8 @@ and unsuccessful completions remain visible and unedited.
 ## Experimental brand watermark (October 14, 2026)
 
 The live app can opt into the research `coordinate-codeword-green4-exp-v1`
-protocol (`tilt-race`). It is disabled by default. Enabling it turns off winner
-continuation for that run; zero/zero bids cannot use this mode. Two private
+protocol (`tilt-race`). It is disabled by default. Winner continuation can run
+alongside it; zero/zero bids cannot use watermark mode. Two private
 advertiser contexts, fixed bids, and exact shared selected IDs are preserved.
 
 The encoder freezes both brand names, recognizes exact word-bounded occurrences,
@@ -160,7 +160,23 @@ prefix tokenization mismatch the encoder abstains from further encoding; it
 never rebuilds the model contexts. EOS and manual stop can leave incomplete
 records or queued mentions. The final alignment audit records these facts.
 
-During an active block, a common keyed pattern multiplies preferred token
+Continuation takes precedence: test the current winner’s original probabilities
+after temperature, before watermark adjustment. Up to the configured limit
+(default three), a token meeting the threshold (default 98%) is emitted free and
+deterministically. Carried tokens draw no random tape, bypass watermark sampling,
+and never renew the allowance. The first confidence miss or exhausted allowance
+resumes an auction at that same position. Every selected ID still advances both
+bidder contexts and the observer, including EOS.
+
+Carried tokens remain inside the fixed 64-token blocks. The encoder schedule
+advances at every absolute position, and the text-only decoder scores all tokens
+without a hidden skip mask. These tokens add no intentional encoding signal,
+so recovery may weaken. The combined mode is not calibrated for recovery or
+false positives. Audits retain carried positions, including partial blocks;
+the inspector shows deterministic output probability and links to the original
+win. Carried-step q is the hypothetical raw auction mixture, not coded sampling.
+
+On an auction step in an active block, a common keyed pattern multiplies preferred token
 probabilities by exp(4), then normalizes each bidder separately. No vocabulary
 rows are removed, including padded model rows. Common mass, contest branches,
 and charges use these **coded** distributions. Exponential candidate sampling

@@ -104,7 +104,7 @@ class WatermarkIntegrationTests(unittest.TestCase):
             server.server_close()
             thread.join()
 
-    def test_round_disables_continuation_and_saves_watermark_even_on_cache_failure(self):
+    def test_round_preserves_continuation_and_saves_watermark_even_on_cache_failure(self):
         try:
             import test_decoder
             from token_auction_lab.decoder import SharedPrefixDecoder
@@ -134,10 +134,15 @@ class WatermarkIntegrationTests(unittest.TestCase):
                 None,
             )
             config = run.call_args.args[3]
-            self.assertEqual(config.continuation_tokens, 0)
+            self.assertEqual(config.continuation_tokens, 3)
+            self.assertEqual(config.continuation_threshold, 0.98)
             self.assertTrue(config.watermark)
-        with self.assertRaises(ValueError):
-            RoundConfig(watermark=True, watermark_brands=("A", "B"), continuation_tokens=3)
+        self.assertEqual(
+            RoundConfig(
+                watermark=True, watermark_brands=("A", "B"), continuation_tokens=3
+            ).continuation_tokens,
+            3,
+        )
         payload = dict(key=1901, message_seed=123, start_token=0, end_token=1, text="synthetic")
 
         class SyntheticEncoder:

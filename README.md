@@ -255,7 +255,11 @@ available with `uv sync --extra watermark` (model weights and PyTorch are not
 needed for decoding).
 
 On Generate, enable **Watermark brand mentions · experimental** inside Generation
-settings, then Submit. This disables winner continuation for that run. Main
+settings, then Submit. Winner continuation remains available: it checks original
+model confidence before watermark adjustment, grants up to three free tokens at
+98% by default, and stops on the first miss. Watermark sampling resumes on the
+next auction step. Carried positions remain in the fixed blocks and are scored
+by the decoder, which can weaken recovery. Main
 inputs still refresh manually. The **Decode this response** button transfers the
 exact output text to the decoder page. Switching pages preserves current inputs
 and the active run. Watermark carrier tokens expose raw and coded probabilities

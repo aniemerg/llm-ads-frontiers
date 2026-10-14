@@ -199,7 +199,7 @@ class InferenceEngine:
             request.advertisers[0].bid, request.advertisers[1].bid,
             seed=request.seed, temperature=request.temperature, max_tokens=request.max_tokens,
             baseline=request.baseline,
-            continuation_tokens=0 if request.baseline or request.watermark else request.continuation_tokens,
+            continuation_tokens=0 if request.baseline else request.continuation_tokens,
             continuation_threshold=request.continuation_threshold,
             watermark=request.watermark, watermark_brands=tuple(ad.brand for ad in request.advertisers),
         )
@@ -395,6 +395,8 @@ class LiveService:
             "selection_rule": event.get("selection_rule", "baseline" if baseline else "auction"),
             "continuation": event.get("continuation"), "watermark": payload,
             "watermark_mixture_tv": event.get("watermark_mixture_tv"),
+            "watermark_block": event.get("watermark_block"),
+            "watermark_skip_reason": event.get("watermark_skip_reason"),
             "rows": [row(i) for i in ids], "pinned": [row(i) for i in sorted(special)],
             "total": len(q), "offset": offset, "limit": limit,
             "outcome": {**outcome, "token": self.engine.decode(outcome["token_id"])},
