@@ -43,3 +43,26 @@
 .live-step-charges>div:last-child strong{color:var(--b)}
 
 .prompt-actions{justify-content:flex-end;gap:8px;margin:0 0 14px}.prompt-actions button{font-size:12px;padding:9px 14px}
+
+/* Watermark views share the compact generator shell. */
+.app-nav { display: flex; gap: .35rem; margin-right: auto; }
+.app-nav a { padding: .4rem .7rem; border-radius: 7px; color: var(--muted); text-decoration: none; font-size: .85rem; }
+.app-nav a[aria-current="page"] { background: #eee9e2; color: var(--ink); }
+.watermark-option { display: flex; align-items: center; gap: .6rem; margin: 1rem 0 .35rem; }
+.watermark-option input { width: auto; }
+.watermark-callout { border-left: 3px solid #8b5bb3; background: #f5f0fa; padding: .8rem 1rem; margin: 1rem 0; border-radius: 6px; }
+.watermark-callout p { margin: .4rem 0 0; }
+.decode-input { margin-bottom: 1rem; }
+#decode-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
+#decode-text { width: 100%; resize: vertical; font: inherit; line-height: 1.55; }
+.decode-actions { margin-top: .8rem; flex-wrap: wrap; }
+.decode-actions select { max-width: 100%; }
+#decode-progress { display: inline-flex; align-items: center; gap: .5rem; font-size: .85rem; }
+.decode-output h2 { margin: 0; }
+.decoded-text { white-space: pre-wrap; overflow-wrap: anywhere; margin: 1.3rem 0; }
+.watermark-highlight { background: #e9d8f8; color: #46215f; border-bottom: 2px solid #9863be; padding: 1px 0; }
+.watermark-swatch { display: inline-block; width: .65rem; height: .65rem; background: #9863be; border-radius: 50%; margin-right: .4rem; }
+.decoded-span { margin-top: .6rem; }
+@media (max-width: 650px) { .live-toolbar { flex-wrap: wrap; } .app-nav { margin-left: auto; margin-right: 0; } }
+#decode-text { padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); }
+.decode-actions select { padding: .65rem .8rem; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); font: inherit; font-size: .85rem; }

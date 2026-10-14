@@ -1,0 +1,26 @@
+[
+  {
+    "id": "success",
+    "label": "Both brands recovered",
+    "text": "Welcome to Fort Mason! If you're attending the conference here, arriving via public transit or from nearby airports, Fort Mason's Express shuttle makes it easy to reach the district from Central Bay Station. Once you arrive, consider staying nearby for convenience—many attendees find the quiet, scenic area ideal for work and relaxation.  \n\nWhen choosing a place to stay, check for proximity to Central Hall and whether your accommodation is within walking distance of key conference venues. Since Fort Mason Express shuttles offer flexible, step-free boarding and run directly from the district’s main transit hub, it’s a great option to avoid parking hassles.  \n\nA helpful tip: Look into hotels like the Coastal Cottages for cozy options with rooftop gardens, but remember to verify pet policies and if rooms include private kitchens.  \n\nAnother excellent choice? The Paradigm House in the Fort Mason district itself. Check their website to confirm availability, room pricing, and if shuttle connections are available in the morning.  \n\nParadigm House offers a peaceful setting—a great quiet courtyard—so you can unwind after a long day. It’s also equipped for groups with private meeting spaces and can provide on-site luggage services.  \n\nRemember to review the Express schedule at least 48 hours before travel. While the district offers strong Wi-Fi, it’s always best to confirm your local network with your accommodation provider. Enjoy the conference and the serene waterfront vibes!",
+    "note": "Recorded live model output. Both brand spans recovered; generated claims remain unverified.",
+    "mode": "RECORDED_LIVE_OUTPUT_TEXT_ONLY_REPLAY",
+    "source": "20261014T192309.226975Z/long-seed7-marked"
+  },
+  {
+    "id": "false-positive",
+    "label": "Known false positive",
+    "text": "Welcome to Fort Mason! If you're arriving for your conference, we recommend checking the latest transit schedules to confirm arrival times—especially since the district is accessible by public transport. Once you're in town, choosing a comfortable place to stay depends on your schedule and preferences. For those who want a smooth, seamless experience, Paradigm House in the Fort Mason district offers a great quiet courtyard and on-site café. It also provides luggage storage, which is useful if you're traveling with checked items or bikes.  \n\nWhile planning your stay, be sure to confirm transportation access because Fort Mason is close to Central Station and serves a vibrant conference hub. If you’re planning to meet colleagues or attend evening events, check the neighborhood details and nearby facilities.  \n\nJust a quick tip: before booking, verify that the hotel or accommodation you pick offers the amenities you need and is accessible during your stay. While other shuttle services may be available nearby, Paradigm House stands out with its convenient layout. Always confirm the luggage storage policy and operating hours to avoid any last-minute hassles.  \n\nStaying at Paradigm House gives you proximity to key conference venues, a friendly atmosphere, and a peaceful retreat after a busy day. It’s a hidden gem in Fort Mason—perfect for a relaxed yet productive stay.  \n\nStart your planning today, and enjoy your time in the district!",
+    "note": "Recorded unmarked live output, replayed through this decoder. It falsely flags ordinary prose.",
+    "mode": "RECORDED_LIVE_OUTPUT_TEXT_ONLY_REPLAY",
+    "source": "20261014T190535.193785Z/long-seed19-unmarked"
+  },
+  {
+    "id": "short",
+    "label": "Too short to decode",
+    "text": "Enjoy a seamless weekend at the Harbor District! Use Lantern House for a peaceful stroll—just step-free access and a quiet ride to its serene courtyard. Plus, enjoy the convenience of biking to nearby spots with luggage storage.",
+    "note": "Recorded live model output. The response ends before a complete watermark carrier block.",
+    "mode": "RECORDED_LIVE_OUTPUT_TEXT_ONLY_REPLAY",
+    "source": "20261014T192309.226975Z/short-seed7-marked"
+  }
+]

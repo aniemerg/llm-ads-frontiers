@@ -120,8 +120,8 @@ Manifests, traces, results, and failed attempts are saved in
 `artifacts/live-lab/`, which is excluded from Git. Full probability vectors are
 retained in memory for the active run's inspector and replaced on the next run.
 Generated text is displayed without repair, including any hallucinations.
-The separate no-ad manifest, trace, and result are saved in the run's `no-ad/`
-directory. Main-run checkpoints include `p_no_ad` for the shared-prefix observer.
+Main-run checkpoints include `p_no_ad` for the shared-prefix observer. No separate
+no-ad answer or `no-ad/` run is created.
 
 ## Install and test
 
@@ -140,7 +140,7 @@ versions; pip resolves within the ranges in `pyproject.toml`.
 
 The CPU auction reference only needs `pip install -r requirements.txt`.
 Without the inference dependencies, decoder tests are explicitly skipped.
-The complete suite has 52 tests: all 11 original auction tests, two prompt tests,
+The original 52-test suite includes all 11 original auction tests, two prompt tests,
 and eighteen decoder tests using tiny randomly initialized Qwen models. These
 synthetic models test mechanics and cache correctness, not text quality.
 Three additional walkthrough tests check archived evidence fidelity, the source
@@ -242,3 +242,30 @@ This independent implementation covers a narrow two-bidder construction. It does
 not establish arbitrary-utility truthful bidding, incentives over complete
 answers, advertiser conversion, or production advertising economics. Generated
 text is never repaired by a third model. Inspect and preserve failures.
+
+## Experimental watermark and text-only decoder
+
+Open `http://127.0.0.1:8765/#decode` to paste exact response text and press
+**Decode**. The saved examples include successful recovery, a known false
+positive, and a response too short to decode. The page highlights candidate
+spans and exposes token ranges, statistical evidence, and JSON export. Only text
+is submitted; no model inference or advertiser dictionary is used to decode.
+The pinned tokenizer must already be cached. Decoder-only dependencies are
+available with `uv sync --extra watermark` (model weights and PyTorch are not
+needed for decoding).
+
+On Generate, enable **Watermark brand mentions · experimental** inside Generation
+settings, then Submit. This disables winner continuation for that run. Main
+inputs still refresh manually. The **Decode this response** button transfers the
+exact output text to the decoder page. Switching pages preserves current inputs
+and the active run. Watermark carrier tokens expose raw and coded probabilities
+in the existing inspector; charges and frozen bid previews use coded inputs and
+the recorded watermark sampler. A separate purple highlight identifies decoder
+candidates, distinct from blue/orange auction-branch colors.
+
+The protocol uses the research strength-4, 64-token-block configuration. Earliest
+recovery requires 128 final-text tokens and a prior eligible mention. Short or
+stopped responses may not decode. Coverage is always unknown, and no match does
+not mean no ads. The detector has a known false positive on unmarked text and is
+not authentication, proof of payment, or a factual accuracy check. Full details
+and unchanged research evidence are in `AD_WATERMARK_DESIGN.md` and `MECHANISM.md`.

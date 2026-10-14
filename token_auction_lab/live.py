@@ -68,6 +68,7 @@ class LiveRequest:
     max_tokens: int
     continuation_tokens: int = 0
     continuation_threshold: float = .98
+    watermark: bool = False
 
     @classmethod
     def parse(cls, value):
@@ -76,6 +77,11 @@ class LiveRequest:
         ads = value.get("advertisers")
         if not isinstance(ads, list) or len(ads) != 2 or any(not isinstance(ad, dict) for ad in ads):
             raise ValueError("Exactly two advertisers are required.")
+        watermark = value.get("watermark", False)
+        if not isinstance(watermark, bool):
+            raise ValueError("Watermark must be true or false.")
+        if watermark and all(ad.get("bid") == 0 for ad in ads):
+            raise ValueError("Watermarking requires at least one positive advertiser bid.")
         carry_tokens = value.get("continuation_tokens", 0)
         carry_threshold = value.get("continuation_threshold", .98)
         validate_continuation(carry_tokens, carry_threshold)
@@ -91,7 +97,7 @@ class LiveRequest:
             numeric(value.get("seed"), "Seed", 0, 2**32 - 1, integer=True),
             numeric(value.get("temperature"), "Temperature", .05, 2),
             numeric(value.get("max_tokens"), "Safety token limit", 1, MAX_OUTPUT_TOKENS, integer=True),
-            carry_tokens, carry_threshold,
+            carry_tokens, carry_threshold, watermark,
         )
 
     @property
@@ -181,6 +187,8 @@ class InferenceEngine:
                     "prompt tokens; this local demo allows 2048 per context. Shorten the briefs.")
             prompts.append((text, ids))
         sources = [*sorted((ROOT / "token_auction_lab").glob("*.py")), ROOT / "auction.py"]
+        if request.watermark:
+            sources += sorted((ROOT / "experiments/ad_stego").glob("*.py"))
         metadata = {**self.metadata, "torch_seed": request.seed, "editable_inputs": asdict(request),
             "advertiser_prompt_policy": ADVERTISER_PROMPT_POLICY,
             "source_sha256": {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
@@ -191,8 +199,9 @@ class InferenceEngine:
             request.advertisers[0].bid, request.advertisers[1].bid,
             seed=request.seed, temperature=request.temperature, max_tokens=request.max_tokens,
             baseline=request.baseline,
-            continuation_tokens=0 if request.baseline else request.continuation_tokens,
+            continuation_tokens=0 if request.baseline or request.watermark else request.continuation_tokens,
             continuation_threshold=request.continuation_threshold,
+            watermark=request.watermark, watermark_brands=tuple(ad.brand for ad in request.advertisers),
         )
         metadata["no_ad_prompt_policy"] = "Only the user message; excludes shared ad instructions, briefs, objectives, and bids."
         if request.baseline:
@@ -330,6 +339,11 @@ class LiveService:
             vectors = self.current["vectors"][step]
         baseline = event["branch"] == "baseline"
         carried = event.get("selection_rule") == "winner_continuation"
+        payload = event.get("watermark")
+        sampled = vectors[:2]
+        if payload:
+            from token_auction_lab.watermark import coded_distributions, sample
+            sampled = coded_distributions(vectors[:2], payload, step)
         if baseline:
             q = vectors[0]
             outcome = {"token_id": event["token_id"], "branch": "baseline",
@@ -337,13 +351,15 @@ class LiveService:
         else:
             a = event["bid_a"] if a is None else numeric(a, "Counterfactual A bid", 0, 1000)
             b = event["bid_b"] if b is None else numeric(b, "Counterfactual B bid", 0, 1000)
-            auction = TwoBidderAuction(*vectors[:2])
+            auction = TwoBidderAuction(*sampled)
             q = auction.mixture(a, b)
             if carried:
                 if a != event["bid_a"] or b != event["bid_b"]:
                     raise ValueError("A carried token depends on a previous win. Inspect that win or refresh inference to change bids.")
                 outcome = {"token_id": event["token_id"], "branch": event["branch"],
                     "payment_a": 0.0, "payment_b": 0.0}
+            elif payload:
+                outcome = asdict(sample(vectors[:2], (a, b), RandomTape(**event["tape"]), payload, step))
             else:
                 outcome = asdict(auction.resolve(a, b, RandomTape(**event["tape"])))
         p_no_ad = vectors[2] if not baseline and len(vectors) == 3 else None
@@ -361,7 +377,11 @@ class LiveService:
             if baseline:
                 value["p"] = float(vectors[0][i])
             else:
-                value.update(p_a=float(vectors[0][i]), p_b=float(vectors[1][i]))
+                value.update(p_a=float(vectors[0][i]), p_b=float(vectors[1][i]),
+                             coded_p_a=float(sampled[0][i]), coded_p_b=float(sampled[1][i]),
+                             actual_q=float(actual_q[i]),
+                             raw_q=float((event["bid_a"] * vectors[0][i] + event["bid_b"] * vectors[1][i])
+                                         / (event["bid_a"] + event["bid_b"])))
                 if p_no_ad is not None:
                     value.update(p_no_ad=float(p_no_ad[i]),
                         delta_q_no_ad=float(actual_q[i] - p_no_ad[i]),
@@ -373,7 +393,8 @@ class LiveService:
         special.update(event[k] for k in ("candidate_a", "candidate_b") if event.get(k) is not None)
         return {"run_id": run_id, "step": step, "baseline": baseline,
             "selection_rule": event.get("selection_rule", "baseline" if baseline else "auction"),
-            "continuation": event.get("continuation"),
+            "continuation": event.get("continuation"), "watermark": payload,
+            "watermark_mixture_tv": event.get("watermark_mixture_tv"),
             "rows": [row(i) for i in ids], "pinned": [row(i) for i in sorted(special)],
             "total": len(q), "offset": offset, "limit": limit,
             "outcome": {**outcome, "token": self.engine.decode(outcome["token_id"])},
@@ -394,6 +415,7 @@ class LiveService:
             if not self.current or self.current["run_id"] != run_id:
                 raise StaleRunError("Only the active run is available here.")
         if name not in {"manifest.json", "events.jsonl", "result.json", "error.json",
+                "response.txt", "watermark.json", "watermark-decoded.json",
                 "no-ad/manifest.json", "no-ad/events.jsonl", "no-ad/result.json"}:
             raise ValueError("Unknown run file.")
         path = self.output_root / run_id / name

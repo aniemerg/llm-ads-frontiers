@@ -144,3 +144,43 @@ and unsuccessful completions remain visible and unedited.
 ## Reference
 
 [1] Paper: https://arxiv.org/abs/2310.10826
+
+## Experimental brand watermark (October 14, 2026)
+
+The live app can opt into the research `coordinate-codeword-green4-exp-v1`
+protocol (`tilt-race`). It is disabled by default. Enabling it turns off winner
+continuation for that run; zero/zero bids cannot use this mode. Two private
+advertiser contexts, fixed bids, and exact shared selected IDs are preserved.
+
+The encoder freezes both brand names, recognizes exact word-bounded occurrences,
+then queues their canonical token spans FIFO at aligned 64-token boundaries.
+An occurrence must have at least one subsequent token. Each complete later
+64-token block carries one earlier span's coordinates and literal text. On a
+prefix tokenization mismatch the encoder abstains from further encoding; it
+never rebuilds the model contexts. EOS and manual stop can leave incomplete
+records or queued mentions. The final alignment audit records these facts.
+
+During an active block, a common keyed pattern multiplies preferred token
+probabilities by exp(4), then normalizes each bidder separately. No vocabulary
+rows are removed, including padded model rows. Common mass, contest branches,
+and charges use these **coded** distributions. Exponential candidate sampling
+uses a separately scoped keyed field. The ideal independent random-field model
+has the coded bid-weighted mixture; the finite public fixed-key implementation
+has no claimed exact fixed-key distribution guarantee. Original probabilities,
+mixtures, charges, and incentive interpretations are not preserved by this mode.
+Inactive blocks use the unchanged reference auction.
+
+The inspector retains raw probabilities, reconstructs coded probabilities from
+the recorded payload, and replays the same watermark sampler for local bid
+counterfactuals. This does not regenerate later text. Manifests include protocol,
+key, strength, tokenizer hash, full vocabulary size, dependencies, source hashes,
+and precommitted brands. The public research key (1901) is not an authentication
+secret. `response.txt`, `watermark.json`, and `watermark-decoded.json` are saved
+before cache validation, so a failed cache check does not erase decoder evidence.
+
+The independent decoder accepts exact final text and a fixed protocol only. It
+never receives advertiser names, prompts, bids, generation seed, or auction
+traces. Results give zero-based half-open token spans and character offsets;
+coverage remains unknown. Nominal corrected p-values are not calibrated
+confidence percentages. The recorded false positive, undecodable short response,
+and cache failures remain in the research evidence. See AD_WATERMARK_DESIGN.md.

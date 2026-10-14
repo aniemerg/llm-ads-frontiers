@@ -8,6 +8,7 @@ dependencies = ["numpy>=1.26,<3"]
 [project.optional-dependencies]
 inference = ["torch>=2.6,<3", "transformers>=4.51,<5"]
 dev = ["ruff>=0.11,<1"]
+watermark = ["tokenizers==0.22.2", "huggingface-hub>=0.34,<1"]
 
 [project.scripts]
 token-auction = "token_auction_lab.cli:main"
@@ -20,10 +21,11 @@ build-backend = "setuptools.build_meta"
 py-modules = ["auction"]
 
 [tool.setuptools.packages.find]
-include = ["token_auction_lab*"]
+include = ["token_auction_lab*", "experiments*"]
 
 [tool.setuptools.package-data]
 token_auction_lab = ["fact_sheets.json", "live_defaults.json"]
+"experiments.ad_stego" = ["evidence/*.json", "evidence/*.txt", "evidence/*.log"]
 
 [tool.ruff]
 line-length = 100

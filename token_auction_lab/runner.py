@@ -32,9 +32,13 @@ class RoundConfig:
     checkpoint_steps: tuple[int, ...] = (0, 8, 24)
     continuation_tokens: int = 0
     continuation_threshold: float = .98
+    watermark: bool = False
+    watermark_brands: tuple[str, ...] = ()
 
     def __post_init__(self):
         validate_continuation(self.continuation_tokens, self.continuation_threshold)
+        if self.watermark and (self.baseline or self.continuation_tokens or len(self.watermark_brands) != 2):
+            raise ValueError("Watermark mode requires two brands, positive total bids, and continuation off.")
         if self.baseline and self.continuation_tokens:
             raise ValueError("The no-ad baseline cannot grant advertiser continuation.")
         if not all(math.isfinite(b) and b >= 0 for b in (self.bid_a, self.bid_b)):
@@ -175,6 +179,14 @@ def run_round(
             "conditioning": "User prompt only, followed by the exact auction-selected token IDs.",
             "role": "Read-only probability observer; no bid, sampling, or payment.",
         }
+    encoder = None
+    if config.watermark:
+        from token_auction_lab.watermark import Encoder, profile, coded_distributions, sample, mixture_tv, decode_response
+        encoder = Encoder(config.watermark_brands)
+        manifest["watermark"] = profile()
+        manifest["sampler"] = "experimental_tilt_race"
+        manifest["watermark"]["brands"] = list(encoder.brands)
+        manifest["watermark"]["schedule"] = "FIFO exact mentions, aligned 64-token blocks; abstain after alignment failure."
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     if on_event:
         on_event({"type": "round_start", "manifest": manifest})
@@ -214,7 +226,9 @@ def run_round(
                 event = {"branch": "baseline", "uniform": u, "payment_a": 0.0, "payment_b": 0.0}
                 event["selected_probabilities"] = {"p": float(p[selected])}
             else:
-                p_a, p_b = distributions
+                raw_a, raw_b = distributions
+                payload = encoder.at_step(step, decoder.generated, text) if encoder else None
+                p_a, p_b = coded_distributions(distributions, payload, step) if encoder else distributions
                 auction = TwoBidderAuction(p_a, p_b)
                 carried = continuation.take(p_a, p_b)
                 if carried:
@@ -223,7 +237,8 @@ def run_round(
                     carried_tokens += 1
                 else:
                     tape = RandomTape.draw(rng)
-                    allocation = auction.resolve(config.bid_a, config.bid_b, tape)
+                    allocation = (sample(distributions, (config.bid_a, config.bid_b), tape, payload, step)
+                                  if payload else auction.resolve(config.bid_a, config.bid_b, tape))
                     continuation.observe_auction(allocation, step)
                 selected = allocation.token_id
                 q = auction.mixture(config.bid_a, config.bid_b)
@@ -241,7 +256,7 @@ def run_round(
                     "bid_b": config.bid_b,
                     "shared_mass": auction.shared_mass,
                     "disagreement_mass": auction.disagreement,
-                    "selection_rule": "winner_continuation" if carried else "auction",
+                    "selection_rule": "winner_continuation" if carried else "watermark" if payload else "auction",
                     "continuation": carry_info if carried else None,
                     "tape": asdict(tape) if tape else None,
                     "threshold_a": config.bid_b * tape.contest / (1 - tape.contest) if tape else None,
@@ -260,6 +275,16 @@ def run_round(
                         [allocation.candidate_b], clean_up_tokenization_spaces=False
                     ),
                 }
+                if encoder:
+                    event["watermark"] = payload
+                    event["watermark_mixture_tv"] = mixture_tv(distributions, (p_a, p_b), (config.bid_a, config.bid_b))
+                    raw_q = (config.bid_a * raw_a + config.bid_b * raw_b) / (config.bid_a + config.bid_b)
+                    event["selected_probabilities"].update(
+                        raw_p_a=float(raw_a[selected]), raw_p_b=float(raw_b[selected]),
+                        raw_q=float(raw_q[selected]), coded_p_a=float(p_a[selected]), coded_p_b=float(p_b[selected]))
+                    for row in event["top_tokens"]:
+                        i = row["token_id"]
+                        row.update(raw_p_a=float(raw_a[i]), raw_p_b=float(raw_b[i]), raw_q=float(raw_q[i]))
                 for row in event["top_tokens"]:
                     row["p_output"] = float(row["token_id"] == selected) if carried else row["q"]
                 if reference:
@@ -282,6 +307,7 @@ def run_round(
                         p_b=p_b,
                         prefix=np.array(decoder.generated, dtype=np.int64),
                         **({"p_no_ad": p_no_ad} if reference else {}),
+                        **({"raw_p_a": raw_a, "raw_p_b": raw_b} if encoder else {}),
                     )
                     event["checkpoint"] = filename
             decoder.advance(selected)
@@ -324,6 +350,16 @@ def run_round(
         synchronize(device)
         ended = time.perf_counter()
         memory = memory_snapshot(device, sampled_mps_peak)
+        # Save text and the independent decoder result even if the cache check fails.
+        watermark_result = None
+        (output / "response.txt").write_text(text)
+        if encoder:
+            visible = decoder.generated[:-1] if decoder.generated and decoder.generated[-1] in eos_ids(model, tokenizer) else decoder.generated
+            audit = encoder.finish(text, visible)
+            decoded = decode_response(text) if text else {"status": "insufficient_evidence", "spans": [], "coverage": "unknown"}
+            watermark_result = {"audit": audit, "decoded": decoded}
+            (output / "watermark.json").write_text(json.dumps(audit, indent=2, ensure_ascii=False) + "\n")
+            (output / "watermark-decoded.json").write_text(json.dumps(decoded, indent=2, ensure_ascii=False) + "\n")
         # The numerical check is outside generation latency measurements.
         dtype = next(model.parameters()).dtype
         atol, rtol = (1e-4, 1e-4) if dtype == torch.float32 else (0.08, 0.02)
@@ -387,6 +423,8 @@ def run_round(
             "cache_validation_seconds": validation_seconds,
             "memory": memory,
         }
+        if watermark_result is not None:
+            result["watermark"] = watermark_result
         if reference_validation is not None:
             result["no_ad_reference_validation"] = reference_validation
         trace.write(json.dumps(result, ensure_ascii=False, allow_nan=False) + "\n")

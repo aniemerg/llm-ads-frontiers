@@ -11,6 +11,7 @@ from collections import Counter
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import mimetypes
+import threading
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlsplit
 
@@ -84,6 +85,8 @@ def load_evidence() -> dict:
 
 
 class Handler(BaseHTTPRequestHandler):
+    watermark_lock = threading.Lock()
+
     def respond(self, body, content_type="application/json; charset=utf-8", status=200):
         if not isinstance(body, bytes):
             body = json.dumps(body, ensure_ascii=False, allow_nan=False).encode()
@@ -108,7 +111,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         route = urlsplit(self.path).path
-        if route not in {"/api/live/run", "/api/live/stop"}:
+        if route not in {"/api/live/run", "/api/live/stop", "/api/watermark/decode"}:
             self.respond({"error": "Unknown route."}, status=404)
             return
         if not self.local_request() or self.headers.get("Content-Type", "").split(";")[0] != "application/json":
@@ -119,7 +122,17 @@ class Handler(BaseHTTPRequestHandler):
             if not 0 < length <= 65536:
                 raise ValueError("Input must be a JSON object of at most 64 KiB.")
             payload = json.loads(self.rfile.read(length))
-            if route == "/api/live/stop":
+            if route == "/api/watermark/decode":
+                from token_auction_lab.watermark import decode_response
+                if not isinstance(payload, dict) or set(payload) != {"text"}:
+                    raise ValueError("The decoder accepts only the exact response text; its profile is fixed.")
+                if not self.watermark_lock.acquire(blocking=False):
+                    raise BusyError("A decode is already running. Please wait.")
+                try:
+                    self.respond(decode_response(payload["text"]))
+                finally:
+                    self.watermark_lock.release()
+            elif route == "/api/live/stop":
                 if not isinstance(payload, dict):
                     raise ValueError("Expected an input object.")
                 self.respond(self.server.live.stop(payload.get("run_id")))
@@ -167,6 +180,13 @@ class Handler(BaseHTTPRequestHandler):
         route = unquote(urlsplit(self.path).path)
         if route.startswith("/api/live"):
             self.live_get(route, parse_qs(urlsplit(self.path).query))
+            return
+        if route == "/api/watermark/examples":
+            if not self.local_request():
+                self.respond({"error": "Local requests only."}, status=403)
+                return
+            from token_auction_lab.watermark import examples
+            self.respond(examples())
             return
         if route == "/api/evidence":
             body = json.dumps(load_evidence(), ensure_ascii=False).encode()
