@@ -129,7 +129,7 @@ class LiveContractTests(unittest.TestCase):
         for change in invalid:
             with self.assertRaises(ValueError):
                 LiveRequest.parse({**default_inputs(), **change})
-        self.assertEqual(default_inputs()["max_tokens"], 4096)
+        self.assertEqual(default_inputs()["max_tokens"], 512)
         self.assertEqual(LiveRequest.parse({**default_inputs(), "max_tokens": 97}).max_tokens, 97)
         payload = default_inputs()
         payload["advertisers"][0]["bid"] = -1
@@ -137,6 +137,7 @@ class LiveContractTests(unittest.TestCase):
             LiveRequest.parse(payload)
         for ad in payload["advertisers"]:
             ad["bid"] = 0
+        payload["watermark"] = False
         request = LiveRequest.parse(payload)
         self.assertTrue(request.baseline)
         baseline = live_messages(request, None)
@@ -189,7 +190,7 @@ class LiveContractTests(unittest.TestCase):
         for i, ad in enumerate(payload["advertisers"]):
             ad.update(brand=f"BRAND {i}", facts="FACT SENTINEL", objective="OBJECTIVE SENTINEL", bid=99)
         self.assertEqual(live_messages(LiveRequest.parse(payload), None), original)
-        self.assertEqual(default_inputs()["advertisers"][0]["brand"], "Bayview Hotel")
+        self.assertEqual(default_inputs()["advertisers"][0]["brand"], "Paradigm House")
         self.assertIn("Fort Mason", default_inputs()["prompt"])
 
     def test_no_ad_probabilities_and_delta_stay_fixed_under_preview_bids(self):

@@ -23,7 +23,7 @@ class WatermarkIntegrationTests(unittest.TestCase):
     def test_option_stays_out_of_prompts_and_rejects_zero_bids(self):
         defaults = default_inputs()
         enabled = LiveRequest.parse({**defaults, "watermark": True})
-        disabled = LiveRequest.parse(defaults)
+        disabled = LiveRequest.parse({**defaults, "watermark": False})
         self.assertFalse(disabled.watermark)
         for side in (0, 1, None):
             self.assertEqual(live_messages(enabled, side), live_messages(disabled, side))

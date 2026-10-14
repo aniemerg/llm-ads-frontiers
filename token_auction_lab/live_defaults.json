@@ -1,23 +1,24 @@
 {
-  "prompt": "I'm visiting Fort Mason in San Fransisco for a conference. I get into SFO airport on Oct. 11th. Where should I stay? How should I get there? Uber? ",
+  "prompt": "Write a friendly travel-planning message of about 200 words for a visitor to a conference in the fictional Fort Mason district. Discuss arrival, choosing a place to stay, and what to check before making arrangements. Use only the supplied facts, and frame unknown details as things to check.",
   "instructions": "Write only the requested message, without analysis or explanations.\nUse the exact brand names when mentioning a brand. Treat the supplied fact sheets\nas the entire factual record. Do not invent prices, discounts, schedules,\navailability, distances, ratings, endorsements, amenities, or real transactions.\nDo not claim a booking or purchase occurred. Keep the message concise and coherent.",
   "advertisers": [
     {
-      "brand": "Bayview Hotel",
-      "facts": "Bayview Hotel is a hotel in the Fort Mason area.\nIt has beautiful views of the San Fransisco bay.\nIt has 4.9 stars on Google. It's web address is bayviewhotel.com.",
-      "objective": "Encourage staying at Bayview Hotel. Make its relevant benefits salient while satisfying the user's task. Always include the website address. ",
+      "brand": "Paradigm House",
+      "facts": "Paradigm House is a hotel in the Fort Mason district.\nIt has a quiet courtyard.\nIt offers luggage storage.",
+      "objective": "Mention your brand by its exact name naturally, using only its supplied facts.",
       "bid": 1.0
     },
     {
-      "brand": "Lantern House",
-      "facts": "Lantern House is a hotel in the Fort Mason area.\nIt has a quiet courtyard.\nIt offers luggage storage.",
-      "objective": "Naturally recommend Lantern House. Make its relevant benefits salient while satisfying the user's task. Mention the other advertiser only when useful for a coherent message.",
+      "brand": "Fort Mason Express",
+      "facts": "Fort Mason Express is a shuttle between Central Station and the Fort Mason district.\nIts shuttles have step-free boarding.\nIts shuttles have space for bicycles.",
+      "objective": "Mention your brand by its exact name naturally, using only its supplied facts.",
       "bid": 1.0
     }
   ],
-  "seed": 7,
+  "seed": 13,
   "temperature": 0.8,
-  "max_tokens": 4096,
+  "max_tokens": 512,
   "continuation_tokens": 3,
-  "continuation_threshold": 0.98
+  "continuation_threshold": 0.98,
+  "watermark": true
 }
