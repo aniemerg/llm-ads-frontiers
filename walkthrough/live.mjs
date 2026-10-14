@@ -5,7 +5,7 @@ const fmt = (n,d=4) => Number(n).toFixed(d);
 const probability = p => p===0?'0%':p<.00001?`${(p*100).toExponential(2)}%`:`${fmt(p*100,3)}%`;
 const busyStates = ['loading','prefilling','generating','validating','no-ad-generating','no-ad-validating'];
 const state = {inputs:null,runId:null,status:'connecting',events:[],manifest:null,result:null,error:null,
-  noAd:null,selected:-1,follow:true,cfA:1,cfB:1,page:0,inspect:null,dirty:false,stopRequested:false,view:'response'};
+  noAd:null,selected:-1,follow:true,cfA:1,cfB:1,page:0,inspect:null,dirty:false,stopRequested:false,view:'response',highlights:true};
 let mounted=false,pollTimer=null,inspectTimer=null,inspectEpoch=0,submitting=false;
 let inspectionKey='',polling=false;
 
@@ -27,7 +27,7 @@ function editor(ad,i){
 
 function form(){
   const v=state.inputs;
-  return `<fieldset id="live-fields"><legend class="sr-only">Live generation inputs</legend><div class="live-editors">${editor(v.advertisers[0],0)}<section class="panel live-shared"><p class="eyebrow">ONE SHARED TASK</p><h2>What should we write?</h2><label>User prompt<textarea id="live-prompt" maxlength="6000" rows="7" required>${esc(v.prompt)}</textarea></label><p class="small muted">Edit the prompt, briefs, or bids. Press Refresh inference when you’re ready. One new model run replaces the active result.</p><details><summary>Shared instructions for ad contexts</summary><div><label>Instructions for both contexts<textarea id="live-instructions" maxlength="8000" rows="9">${esc(v.instructions)}</textarea></label><p class="small muted">These rules apply only to advertiser contexts. The no-ad reference receives only your user prompt. Exact rendered prompts are available below.</p></div></details><details><summary>Generation settings</summary><div><div class="live-settings"><label>Seed<input id="live-seed" type="number" min="0" max="4294967295" step="1" required value="${v.seed}"></label><label>Temperature<input id="live-temperature" type="number" min="0.05" max="2" step="any" required value="${v.temperature}"></label><label>Safety limit<input id="live-cap" type="number" min="1" max="4096" step="1" required value="${v.max_tokens}"></label></div><p class="small muted">The model chooses when to end its response. This safety limit only stops a run that keeps going; you can also press Stop generation. Fresh auctions sample the full vocabulary. Both bids zero selects the separate no-ad path.</p><div class="continuation-settings"><p class="eyebrow">WINNER CONTINUATION · EXPERIMENTAL</p><div class="live-settings"><label>Extra tokens<input id="live-carry-count" type="number" min="0" max="32" step="1" value="${v.continuation_tokens===undefined?0:v.continuation_tokens}"></label><label>Confidence (%)<input id="live-carry-confidence" type="number" min="50.01" max="100" step="any" value="${(v.continuation_threshold===undefined?.98:v.continuation_threshold)*100}"></label></div><p class="small muted">After a contested win, carry the winner’s next token if its probability meets this threshold. Recheck each token; stop at the first miss or the limit. Carried tokens cost nothing. Set extra tokens to 0 for the original reference auction. Confidence uses the temperature above.</p></div></div></details></section>${editor(v.advertisers[1],1)}</div></fieldset>`;
+  return `<fieldset id="live-fields"><legend class="sr-only">Live generation inputs</legend><div class="live-editors">${editor(v.advertisers[0],0)}<section class="panel live-shared"><p class="eyebrow">ONE SHARED TASK</p><h2 id="user-prompt-heading">User prompt</h2><label><textarea aria-labelledby="user-prompt-heading" id="live-prompt" maxlength="6000" rows="7" required>${esc(v.prompt)}</textarea></label><p class="small muted">Edit the prompt, briefs, or bids. Press Refresh inference when you’re ready. One new model run replaces the active result.</p><details><summary>Shared instructions for ad contexts</summary><div><label>Instructions for both contexts<textarea id="live-instructions" maxlength="8000" rows="9">${esc(v.instructions)}</textarea></label><p class="small muted">These rules apply only to advertiser contexts. The no-ad reference receives only your user prompt. Exact rendered prompts are available below.</p></div></details><details><summary>Generation settings</summary><div><div class="live-settings"><label>Seed<input id="live-seed" type="number" min="0" max="4294967295" step="1" required value="${v.seed}"></label><label>Temperature<input id="live-temperature" type="number" min="0.05" max="2" step="any" required value="${v.temperature}"></label><label>Safety limit<input id="live-cap" type="number" min="1" max="4096" step="1" required value="${v.max_tokens}"></label></div><p class="small muted">The model chooses when to end its response. This safety limit only stops a run that keeps going; you can also press Stop generation. Fresh auctions sample the full vocabulary. Both bids zero selects the separate no-ad path.</p><div class="continuation-settings"><p class="eyebrow">WINNER CONTINUATION · EXPERIMENTAL</p><div class="live-settings"><label>Extra tokens<input id="live-carry-count" type="number" min="0" max="32" step="1" value="${v.continuation_tokens===undefined?0:v.continuation_tokens}"></label><label>Confidence (%)<input id="live-carry-confidence" type="number" min="50.01" max="100" step="any" value="${(v.continuation_threshold===undefined?.98:v.continuation_threshold)*100}"></label></div><p class="small muted">After a contested win, carry the winner’s next token if its probability meets this threshold. Recheck each token; stop at the first miss or the limit. Carried tokens cost nothing. Set extra tokens to 0 for the original reference auction. Confidence uses the temperature above.</p></div></div></details></section>${editor(v.advertisers[1],1)}</div></fieldset>`;
 }
 
 export async function mountLive(){
@@ -181,11 +181,11 @@ function renderOutput(){
   }
   const latest=state.events[state.events.length-1],r=state.result;
   const baseline=latest.branch==='baseline';
-  const status=state.status==='error'?'FAILED LIVE ATTEMPT':state.result?'LIVE RESULT · CACHE CHECK PASSED':'LIVE GENERATION · VALIDATION PENDING';
   const outputExists=Boolean($('#live-message'));
-  if(!outputExists){$('#live-output').innerHTML=`<section class="panel live-response"><div class="output-toolbar"><div class="output-tabs" role="tablist" aria-label="Response view"><button id="live-response-tab" role="tab" aria-controls="live-response-view">Ad-influenced response</button><button id="live-tokens-tab" role="tab" aria-controls="live-token-view">Inspect any generated token</button></div><button id="live-copy" class="copy-button" aria-label="Copy ad content to clipboard" title="Copy ad content"><svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="8" y="7" width="12" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h2"/></svg><span>Copy</span></button><span id="live-copy-status" class="small muted" role="status"></span></div><div id="live-response-view" role="tabpanel" aria-labelledby="live-response-tab" tabindex="0"><span class="badge live-badge" id="live-output-badge"></span><p id="live-message" class="output-text"></p></div><div id="live-token-view" role="tabpanel" aria-labelledby="live-tokens-tab" tabindex="0" hidden><div class="token-tools"><button id="live-follow">Follow newest token</button></div><div class="token-ribbon" id="live-tokens"></div><div class="legend"><span><i class="dot shared"></i>Shared · free</span><span><i class="dot a"></i>A branch</span><span><i class="dot b"></i>B branch</span><span>↳ = carried token · free</span></div><p class="small muted">Labels show selection, not authorship. Original model output, with no text repair. Token labels may show partial words or byte fragments.</p></div><div class="live-metrics" id="live-metrics"></div><p id="live-rule" class="small muted"></p></section>`;
+  if(!outputExists){$('#live-output').innerHTML=`<section class="panel live-response"><div class="output-toolbar"><div class="output-tabs" role="tablist" aria-label="Response view"><button id="live-response-tab" role="tab" aria-controls="live-response-view">Ad-influenced response</button><button id="live-tokens-tab" role="tab" aria-controls="live-token-view">Inspect any generated token</button></div><button id="live-highlights" class="highlight-toggle" aria-pressed="true" title="Highlight tokens selected for advertisers A and B">Highlights</button><button id="live-copy" class="copy-button" aria-label="Copy ad content to clipboard" title="Copy ad content"><svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="8" y="7" width="12" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h2"/></svg><span>Copy</span></button><span id="live-copy-status" class="small muted" role="status"></span></div><div id="live-response-view" role="tabpanel" aria-labelledby="live-response-tab" tabindex="0"><p id="live-message" class="output-text"></p></div><div id="live-token-view" role="tabpanel" aria-labelledby="live-tokens-tab" tabindex="0" hidden><div class="token-tools"><button id="live-follow">Follow newest token</button></div><div class="token-ribbon" id="live-tokens"></div><div class="legend"><span><i class="dot shared"></i>Shared · free</span><span><i class="dot a"></i>A branch</span><span><i class="dot b"></i>B branch</span><span>↳ = carried token · free</span></div><p class="small muted">Labels show selection, not authorship. Original model output, with no text repair. Token labels may show partial words or byte fragments.</p></div><div class="live-metrics" id="live-metrics"></div><p id="live-rule" class="small muted"></p></section>`;
     $('#live-follow').addEventListener('click',()=>{state.follow=true;state.selected=state.events.length-1;inspectionKey='';renderOutput();});
     $('#live-copy').addEventListener('click',copyResponse);
+    $('#live-highlights').addEventListener('click',()=>{state.highlights=!state.highlights;renderOutput();});
     [['response','live-response-tab'],['tokens','live-tokens-tab']].forEach(([view,id])=>{
       $('#'+id).addEventListener('click',()=>{state.view=view;renderOutput();});
       $('#'+id).addEventListener('keydown',event=>{
@@ -196,8 +196,10 @@ function renderOutput(){
     });
   }
   $('#live-response-tab').textContent=baseline?'No-ad response':'Ad-influenced response';
-  $('#live-output-badge').textContent=status;
-  $('#live-message').textContent=latest.decoded_text_so_far||'[No visible text yet]';
+  if(state.highlights&&latest.decoded_text_so_far){
+    $('#live-message').innerHTML=responseSegments(state.events).map(segment=>
+      segment.branch?`<span class="response-ad branch-${segment.branch}" title="${segment.branch} · token ${segment.step+1}${segment.carried?' · continuation':''}">${esc(segment.text)}</span>`:esc(segment.text)).join('');
+  }else $('#live-message').textContent=latest.decoded_text_so_far||'[No visible text yet]';
   $('#live-metrics').innerHTML=[['Tokens',state.events.length],['Generation',`${fmt(r?r.seconds:latest.elapsed_seconds,2)} s`],['A total charge',fmt(latest.cumulative_a,6)],['B total charge',fmt(latest.cumulative_b,6)],['Stop',r?(({eos:'model ended response',length:'safety limit · truncated',user_stop:'stopped by you · partial'})[r.stop_reason]||r.stop_reason):state.status==='error'?'failed':'in progress']].map(([k,v])=>`<div><span>${k}</span><strong>${esc(v)}</strong></div>`).join('');
   $('#live-rule').textContent=baseline?'No-ad generation · no winner continuation':state.manifest&&state.manifest.config.continuation_tokens?`Experimental winner continuation · up to ${state.manifest.config.continuation_tokens} extra tokens at ${probability(state.manifest.config.continuation_threshold)} confidence · ${state.events.filter(carried).length} carried tokens · no extra charges`:'Reference auction · a fresh auction for every token';
   $('#live-follow').textContent=state.follow?'Following newest ✓':'Follow newest token';
@@ -212,7 +214,33 @@ function renderOutput(){
     $('#'+id).setAttribute('aria-selected',String(selected));$('#'+id).tabIndex=selected?0:-1;
   });
   $('#live-copy').disabled=!latest.decoded_text_so_far;
+  $('#live-highlights').hidden=inspecting||baseline;
+  $('#live-highlights').setAttribute('aria-pressed',String(state.highlights));
   if(inspecting)renderInspector();renderProvenance();
+}
+
+// Use the exact decoded prefixes, not concatenated token labels: byte fragments
+// can revise the previous suffix when a complete Unicode character arrives.
+export function responseSegments(events){
+  let previous='',segments=[];
+  for(const event of events){
+    const text=event.decoded_text_so_far||'';
+    let common=0;
+    while(common<previous.length&&common<text.length&&previous[common]===text[common])common++;
+    if(common&&/[\uD800-\uDBFF]/.test(text[common-1]))common--;
+    let remaining=common;
+    const kept=[];
+    for(const segment of segments){
+      if(!remaining)break;
+      const part=segment.text.slice(0,remaining);
+      kept.push({...segment,text:part});remaining-=part.length;
+    }
+    if(text.length>common)kept.push({text:text.slice(common),
+      branch:['A','B'].includes(event.branch)?event.branch:null,
+      step:event.step,carried:carried(event)});
+    segments=kept;previous=text;
+  }
+  return segments;
 }
 
 async function copyResponse(){

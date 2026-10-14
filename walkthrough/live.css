@@ -25,3 +25,19 @@
 .single-page .live-response .output-text{font-size:24px;margin:16px 0 22px;min-height:0}
 .single-page .live-metrics{padding:12px 0}
 @media(max-width:900px){.single-page .live-toolbar{flex-wrap:wrap;gap:12px}.single-page .live-toolbar h1{font-size:28px}.single-page #live-status{order:3;width:100%;margin:0}.single-page .live-toolbar .controls{margin-left:auto;flex-direction:row}.single-page .live-workspace main{padding:18px}.output-tabs button{font-size:12px}.single-page .live-response .output-text{font-size:22px}}
+
+/* Advertiser identity uses the same palette in editors, tokens, and prose. */
+.live-ad.a{--advertiser-color:var(--a);--advertiser-fill:var(--a-soft);--advertiser-border:var(--a-border)}
+.live-ad.b{--advertiser-color:var(--b);--advertiser-fill:var(--b-soft);--advertiser-border:var(--b-border)}
+.live-editors .live-ad{background:var(--advertiser-fill);border-color:var(--advertiser-border);border-top:4px solid var(--advertiser-color)}
+.live-ad-heading .eyebrow{background:var(--advertiser-color);color:white;font-weight:650;border-radius:5px;padding:6px 9px;letter-spacing:.06em}
+.live-ad input:focus,.live-ad textarea:focus{border-color:var(--advertiser-color)}
+.dot.shared{background:#fff;box-shadow:inset 0 0 0 1px var(--shared-border)}
+.highlight-toggle{margin-left:auto;font-size:11px;padding:7px 9px;border-color:transparent;background:transparent;color:var(--muted)}
+.highlight-toggle[aria-pressed=true]{background:var(--shared-soft);border-color:var(--line);color:var(--ink)}
+.highlight-toggle:not([hidden])+.copy-button{margin-left:0}
+.response-ad{box-decoration-break:clone;-webkit-box-decoration-break:clone;border-radius:3px}
+.response-ad.branch-A{background:var(--a-soft);color:var(--a)}
+.response-ad.branch-B{background:var(--b-soft);color:var(--b)}
+.live-step-charges>div:first-child strong{color:var(--a)}
+.live-step-charges>div:last-child strong{color:var(--b)}
