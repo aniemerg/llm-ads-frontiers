@@ -223,7 +223,7 @@ class CachedWatermarkReplayTests(unittest.TestCase):
     def test_saved_success_false_positive_and_short_failure_remain_reproducible(self):
         expected = {"success": [(91, 94), (165, 168)], "false-positive": [(80, 102)], "short": []}
         for example in wm.examples():
-            result = wm.decode_response(example["text"])
+            result = wm.decode_legacy_response(example["text"])
             self.assertEqual(result["coverage"], "unknown")
             self.assertEqual(
                 [(s["start_token"], s["end_token"]) for s in result["spans"]],
@@ -240,7 +240,7 @@ class CachedWatermarkReplayTests(unittest.TestCase):
     def test_scheduler_matches_recorded_boundaries_and_repeated_mentions(self):
         example = wm.examples()[0]
         ids = self.tokenizer.encode(example["text"])
-        encoder = wm.Encoder(("Paradigm House", "Fort Mason Express"))
+        encoder = wm.LegacyEncoder(("Paradigm House", "Fort Mason Express"))
         for step in range(0, len(ids), 64):
             encoder.at_step(step, ids[:step], self.tokenizer.decode(ids[:step]))
         audit = encoder.finish(example["text"], ids)
@@ -267,7 +267,7 @@ class CachedWatermarkReplayTests(unittest.TestCase):
     def test_repeats_do_not_delay_second_brand_or_requeue_pending_brands(self):
         text = "Paradigm House. Paradigm House. Fort Mason Express." + " Plan" * 200
         ids = self.tokenizer.encode(text)
-        encoder = wm.Encoder(("Fort Mason Express", "Paradigm House", "Paradigm House"))
+        encoder = wm.LegacyEncoder(("Fort Mason Express", "Paradigm House", "Paradigm House"))
         first = encoder.at_step(64, ids[:64], self.tokenizer.decode(ids[:64]))
         self.assertEqual(first["text"].strip(), "Paradigm House")
         self.assertEqual([r["text"].strip() for r in encoder.queue], ["Fort Mason Express"])
@@ -277,7 +277,7 @@ class CachedWatermarkReplayTests(unittest.TestCase):
         self.assertIsNone(encoder.at_step(192, ids[:192], self.tokenizer.decode(ids[:192])))
         self.assertEqual(len(encoder.records), 2)
         # Each new response gets its own allowance; no cross-run suppression.
-        fresh = wm.Encoder(encoder.brands)
+        fresh = wm.LegacyEncoder(encoder.brands)
         self.assertEqual(fresh.at_step(64, ids[:64], self.tokenizer.decode(ids[:64])), first)
 
     def test_limit_never_silently_truncates(self):

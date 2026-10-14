@@ -31,6 +31,9 @@ def write(path, data):
 
 
 def record_id(record):
+    if "start_word" in record:
+        return (record["protocol"], record["start_word"], record["end_word"],
+                record["carrier_start_word"])
     return record["start_token"], record["end_token"], record["carrier_start"]
 
 
@@ -56,12 +59,16 @@ def score(text, brands, audit, decoded):
         "both_brands_correct_no_extras": len(recovered) == len(brands) and not extra,
         "alignment_failures": audit.get("prefix_alignment_failures", []),
         "canonical_roundtrip": audit.get("canonical_roundtrip"),
+        "regions_over_word_limit": [s for s in spans if len(s["literal_text"].split()) > 16],
     }
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("output", type=Path)
+    parser.add_argument("--first-seed", type=int, default=21)
+    parser.add_argument("--marked-runs", type=int, default=8)
+    parser.add_argument("--control-runs", type=int, default=4)
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
     initial = api("/api/live")
@@ -69,18 +76,24 @@ def main():
         raise RuntimeError("An existing generation is active; batch was not started.")
     write(args.output / "before-batch.json", initial)
     base = initial.get("inputs", initial.get("defaults"))
-    cases = [{"watermark": False, "seed": s} for s in range(21, 25)]
-    cases += [{"watermark": True, "seed": s} for s in range(21, 29)]
+    cases = [{"watermark": False, "seed": s}
+             for s in range(args.first_seed, args.first_seed + args.control_runs)]
+    cases += [{"watermark": True, "seed": s}
+              for s in range(args.first_seed, args.first_seed + args.marked_runs)]
     plan = {
         "mode": "LIVE_MODEL_WATERMARK_EVALUATION",
         "created_at": datetime.now(timezone.utc).isoformat(),
         "base_inputs": base,
         "cases": cases,
-        "protocol": "Fixed public key and once-per-brand scheduler; no tuning during batch.",
+        "protocol": "Current app protocol with fixed public key; no tuning during batch. "
+        "Each run manifest records exact code hashes and protocol parameters.",
         "decoding_inputs": "Only exact response text sent to /api/watermark/decode.",
         "controls": "Same ad contexts and bids with watermark disabled; not ad-free responses.",
-        "scoring": "Exact span coordinates AND carrier start must match a completed "
-        "encoder record. Scoring reads the audit only after the independent text decode returns.",
+        "scoring": "Exact region coordinates AND carrier start must match an eligible "
+        "encoder record (word coordinates for v2; token coordinates for legacy). "
+        "V2 eligibility means at least 32 scored carrier tokens, including partial final blocks. "
+        "A brand is recovered only when fully inside that matching region. "
+        "Scoring reads the audit only after independent text decoding returns.",
         "limitations": "Small single-task fixed-key sample; "
         "not general calibration or authentication.",
     }

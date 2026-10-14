@@ -147,23 +147,35 @@ and unsuccessful completions remain visible and unedited.
 
 ## Experimental brand watermark (October 14, 2026)
 
-The live app can opt into the research `coordinate-codeword-green4-exp-v1`
-protocol (`tilt-race`). The saved live demo defaults enable it. Winner continuation can run
+The live app uses the experimental `word-window16-byte-green4-exp-v2`
+protocol (`tilt-race` with coarse word regions). The saved live demo defaults enable it. Winner continuation can run
 alongside it; zero/zero bids cannot use watermark mode. Two private
 advertiser contexts, fixed bids, and exact shared selected IDs are preserved.
 
 The encoder freezes both brand names and queues only the first eligible exact
-word-bounded occurrence of each brand, FIFO at aligned 64-token boundaries.
+word-bounded occurrence of each brand, FIFO at aligned 48-word boundaries.
 A brand is reserved when queued, so repeated mentions cannot displace the other
 brand or consume additional blocks. The allowance resets for each response.
-An occurrence must have at least one subsequent token. Each complete later
-64-token block carries one earlier span's coordinates and literal text. On a
-prefix tokenization mismatch the encoder abstains from further encoding; it
-never rebuilds the model contexts. EOS and manual stop can leave incomplete
-records or queued mentions. A truncated or undecodable block is not retried;
-one encoding attempt per brand does not guarantee successful detection.
-The final alignment audit and manifest record the mention policy. Decoding is
-unchanged and can still recover multiple marked occurrences in older recordings.
+Words are whitespace-delimited. Each occurrence is covered by the smallest
+8-word-grid region of 8 or 16 words that contains it. The region must end before
+the carrier's starting word count. Identical regions are encoded once, even if
+they contain both brands; distinct overlapping regions stay separate. Each
+region's coordinates and literal text seed its codeword. A brand spanning more
+than 16 grid-aligned words is ineligible. No brand dictionary reaches decoding.
+
+Carrier assignment uses the number of words in the visible prefix (including an
+unfinished final word), grouped into blocks of 48. Evidence fields use the UTF-8
+byte length of that prefix. The decoder reconstructs these positions from final
+text and the pinned tokenizer. Token merges can lose local evidence but do not
+shift all later byte positions. Split Unicode or other noncanonical tokenization
+can still lose evidence; this is not edit robustness. Model contexts always keep
+the exact selected IDs. Audits retain canonical-roundtrip diagnostics, but v2
+does not stop encoding on a mismatch.
+
+A carrier with at least 32 canonical tokens can be scored, including a partial
+last block. Its Gamma threshold uses its actual token count. EOS and manual stop
+can leave insufficient evidence or queued mentions; no prose is added and no
+undecodable block is retried. One attempt per brand does not guarantee recovery.
 
 Continuation takes precedence: test the current winner’s original probabilities
 after temperature, before watermark adjustment. Up to the configured limit
@@ -173,8 +185,8 @@ and never renew the allowance. The first confidence miss or exhausted allowance
 resumes an auction at that same position. Every selected ID still advances both
 bidder contexts and the observer, including EOS.
 
-Carried tokens remain inside the fixed 64-token blocks. The encoder schedule
-advances at every absolute position, and the text-only decoder scores all tokens
+Carried tokens remain inside the visible-text carrier blocks. The encoder schedule
+advances with the visible prefix, and the text-only decoder scores all tokens
 without a hidden skip mask. These tokens add no intentional encoding signal,
 so recovery may weaken. The combined mode is not calibrated for recovery or
 false positives. Audits retain carried positions, including partial blocks;
@@ -199,9 +211,17 @@ and precommitted brands. The public research key (1901) is not an authentication
 secret. `response.txt`, `watermark.json`, and `watermark-decoded.json` are saved
 before cache validation, so a failed cache check does not erase decoder evidence.
 
-The independent decoder accepts exact final text and a fixed protocol only. It
+The independent decoder accepts exact final text and fixed public protocols only. It
 never receives advertiser names, prompts, bids, generation seed, or auction
 traces. Results give zero-based half-open token spans and character offsets;
 coverage remains unknown. Nominal corrected p-values are not calibrated
-confidence percentages. The recorded false positive, undecodable short response,
+confidence percentages. It checks both v2 and legacy v1 with alpha .005 each,
+splitting the total nominal .01 budget. Each family's Bonferroni correction counts
+all its region/block hypotheses, including overlapping regions. V2 has fewer
+hypotheses than exact token spans. Multiple significant v2 regions are retained;
+their intersection gets a blended UI color without duplicating text. The UI caps
+each displayed region at 16 words, including legacy detections. Colors identify
+regions, not advertiser identities. The original v1 decoder at alpha .01 and its
+recorded false-positive regression remain unchanged in the reference tests.
+The recorded false positive, undecodable short response,
 and cache failures remain in the research evidence. See AD_WATERMARK_DESIGN.md.

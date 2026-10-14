@@ -3,13 +3,13 @@
 import hashlib
 import json
 import re
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
 
-from experiments.ad_stego import tilt, tilt_race
+from experiments.ad_stego import tilt, tilt_race, word_window
 from experiments.ad_stego.prototype import Config, Span, decode
 from experiments.ad_stego.tokenizer_check import REVISION, QwenTokenizer
 
@@ -43,16 +43,22 @@ def get_tokenizer():
     return tokenizer
 
 
-def profile():
+def profile(legacy=False):
     return {
-        "protocol": tilt_race.PROTOCOL,
+        "protocol": tilt_race.PROTOCOL if legacy else word_window.PROTOCOL,
         "scheme": "tilt-race",
         "key": KEY,
         "tokenizer": "Qwen/Qwen3-4B-Instruct-2507",
         "tokenizer_revision": REVISION,
         "tokenizer_sha256": hashlib.sha256(tokenizer_path().read_bytes()).hexdigest(),
         "vocabulary_size": VOCABULARY_SIZE,
-        "config": asdict(CONFIG),
+        "config": asdict(CONFIG),  # Legacy token-grid parameters and shared length/alpha limits.
+        "region_grid_words": word_window.GRID,
+        "max_region_words": word_window.MAX_WORDS,
+        "carrier_words": word_window.CARRIER_WORDS,
+        "minimum_evidence_tokens": word_window.MIN_EVIDENCE_TOKENS,
+        "decoder_alpha_per_protocol": CONFIG.alpha / 2,
+        "position_reference": "token index" if legacy else "visible prefix UTF-8 byte length",
         "strength": tilt.STRENGTH,
         "preferred_fraction": tilt.GREEN_PROBABILITY,
         "probability_note": PROBABILITY_NOTE,
@@ -60,16 +66,18 @@ def profile():
     }
 
 
-def decode_response(text):
+def decode_legacy_response(text, alpha=CONFIG.alpha):
     if not isinstance(text, str) or not text or len(text) > 60000:
         raise ValueError("Paste an exact response of 1–60,000 characters.")
     tokenizer = get_tokenizer()
     encoding = tokenizer.backend.encode(text, add_special_tokens=False)
-    result = decode(text, tokenizer, key=KEY, config=CONFIG, scheme="tilt-race")
+    result = decode(text, tokenizer, key=KEY, config=replace(CONFIG, alpha=alpha),
+                    scheme="tilt-race")
     for span in result["spans"]:
         offsets = encoding.offsets[span["start_token"] : span["end_token"]]
         lo, hi = min(x[0] for x in offsets), max(x[1] for x in offsets)
         span.update(
+            protocol=tilt_race.PROTOCOL,
             start_char=lo,
             end_char=hi,
             literal_text=text[lo:hi],
@@ -78,14 +86,49 @@ def decode_response(text):
         )
     return {
         **result,
-        "profile": profile(),
+        "profile": profile(legacy=True),
         "token_count": len(encoding.ids),
         "text_sha256": hashlib.sha256(text.encode()).hexdigest(),
         "minimum_tokens": 2 * CONFIG.block_tokens,
     }
 
 
-class Encoder:
+def decode_response(text):
+    """Try both public protocols, splitting the nominal family error budget.
+
+    No response-specific selector, advertiser list, run ID, or encoder audit.
+    The original alpha=.01 decoder remains available for historical regression.
+    """
+    legacy = decode_legacy_response(text, alpha=CONFIG.alpha / 2)
+    current = word_window.decode(text, get_tokenizer(), key=KEY, alpha=CONFIG.alpha / 2)
+    spans = []
+    for family in (legacy, current):
+        for s in family["spans"]:
+            lo, hi = s["start_char"], s["end_char"]
+            if len(text[lo:hi].split()) > word_window.MAX_WORDS:
+                continue
+            spans.append({**s, "literal_text": text[lo:hi],
+                          "start_utf16": len(text[:lo].encode("utf-16-le")) // 2,
+                          "end_utf16": len(text[:hi].encode("utf-16-le")) // 2})
+    statuses = {legacy["status"], current["status"]}
+    status = ("detected" if spans else "unsupported_length" if "unsupported_length" in statuses
+              else "insufficient_evidence" if statuses == {"insufficient_evidence"}
+              else "ambiguous" if "ambiguous" in statuses else "not_detected")
+    return {"status": status,
+            "spans": sorted(spans, key=lambda s: (s["start_char"], s["end_char"])),
+            "coverage": "unknown", "profile": profile(), "token_count": legacy["token_count"],
+            "text_sha256": legacy["text_sha256"], "max_region_words": word_window.MAX_WORDS,
+            "families": [{k: v for k, v in f.items() if k not in
+                          ("profile", "text_sha256", "token_count", "minimum_tokens")}
+                         for f in (current, legacy)]}
+
+
+class Encoder(word_window.Encoder):
+    def __init__(self, brands, tokenizer=None):
+        super().__init__(brands, tokenizer or get_tokenizer(), KEY)
+
+
+class LegacyEncoder:
     """FIFO first eligible mention per brand; never changes model contexts."""
 
     def __init__(self, brands, tokenizer=None):
@@ -157,12 +200,14 @@ class Encoder:
 def coded_distributions(raw, payload, step):
     if payload is None:
         return raw
-    return tilt.transform(*raw, key=payload["key"], message=payload["message_seed"], step=step)
+    return tilt.transform(*raw, key=payload["key"], message=payload["message_seed"],
+                          step=payload.get("byte_position", step))
 
 
 def sample(raw, bids, tape, payload, step):
     return tilt_race.sample(
-        *raw, bids, tape, key=payload["key"], message=payload["message_seed"], step=step
+        *raw, bids, tape, key=payload["key"], message=payload["message_seed"],
+        step=payload.get("byte_position", step)
     )
 
 

@@ -196,13 +196,13 @@ def run_round(
                                if config.continuation_tokens else "experimental_tilt_race")
         manifest["watermark"]["continuation_policy"] = (
             "raw_confidence_first_v1; carried tokens bypass watermark sampling and cost zero. "
-            "Fixed block positions advance on every token; decoding scores all final-text tokens. "
+            "Visible-text word blocks advance on every token; decoding scores all final-text tokens. "
             "Recovery and false positives for the combined mode are not calibrated.")
         manifest["watermark"]["brands"] = list(encoder.brands)
         manifest["watermark"]["mention_policy"] = MENTION_POLICY
         manifest["watermark"]["schedule"] = (
-            "FIFO first eligible mention per brand, aligned 64-token blocks; "
-            "no repeated-brand blocks; abstain after alignment failure.")
+            "FIFO first eligible mention per brand in aligned 8/16-word regions; "
+            "48-word carriers, UTF-8 prefix byte positions; identical regions deduplicated.")
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     if on_event:
         on_event({"type": "round_start", "manifest": manifest})
@@ -380,7 +380,7 @@ def run_round(
             visible = decoder.generated[:-1] if decoder.generated and decoder.generated[-1] in eos_ids(model, tokenizer) else decoder.generated
             audit = encoder.finish(text, visible)
             audit["carried_steps"] = carried_steps
-            audit["block_position_policy"] = "All final-text tokens, including carried tokens, keep their absolute positions and are scored by the decoder."
+            audit["block_position_policy"] = "All final-text tokens, including carried tokens, are scored using visible-prefix byte positions in 48-word carrier blocks."
             for record in audit.get("records", []):
                 record["carried_steps"] = [s for s in carried_steps
                     if record["carrier_start"] <= s < min(record["carrier_end"], len(visible))]

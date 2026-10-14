@@ -1,5 +1,26 @@
 # Steganographic ad presence and brand token spans
 
+**Current app update (October 14, 2026):** the app now uses 8/16-word regions,
+48-word carriers, and visible-prefix byte positions. Overlaps remain distinct
+and use blended highlights. The text-only decoder checks both protocols with
+half the nominal error budget each. See [MECHANISM.md](MECHANISM.md) for current
+rules. The design and evidence below describe the earlier isolated prototype;
+its failures and original alpha=.01 regression tests are preserved.
+
+The fresh v2 batch (marked seeds 31–36; unmarked controls 31–32) recovered both
+brands in **1/6** responses and one brand in **5/6**, or **7/12** brand opportunities.
+There were no extra detections in marked responses, but **1/2 unmarked controls
+was falsely flagged**. Every displayed region stayed within 16 words. One brand
+appeared too late for sufficient carrier evidence. One cache-validation failure
+was retained; both brands decoded from its preserved text. The earlier exact-span
+batch recovered both brands in 3/8 responses and flagged 0/4 controls. These small
+batches use different seeds and do **not** demonstrate improved reliability.
+All eight planned runs, exact responses, decoder results, and post-decode failure
+diagnostics are in the [HTML report](experiments/ad_stego/evidence/word_regions_batch_2026-10-14.html)
+and [JSON evidence](experiments/ad_stego/evidence/word_regions_batch_2026-10-14.json).
+Fresh isolated-process checks reproduced a marked result and the false positive
+with only response text and fixed decoder files; no run or model access occurred.
+
 October 14, 2026. The latest isolated prototype recovered both brands from each
 of two long live Qwen responses, using only final response text and fixed decoder
 settings. It applies a shared watermark preference to both bidder distributions

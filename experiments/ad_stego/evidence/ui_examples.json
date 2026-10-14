@@ -9,9 +9,9 @@
   },
   {
     "id": "false-positive",
-    "label": "Known false positive",
+    "label": "Historical false positive · v1",
     "text": "Welcome to Fort Mason! If you're arriving for your conference, we recommend checking the latest transit schedules to confirm arrival times—especially since the district is accessible by public transport. Once you're in town, choosing a comfortable place to stay depends on your schedule and preferences. For those who want a smooth, seamless experience, Paradigm House in the Fort Mason district offers a great quiet courtyard and on-site café. It also provides luggage storage, which is useful if you're traveling with checked items or bikes.  \n\nWhile planning your stay, be sure to confirm transportation access because Fort Mason is close to Central Station and serves a vibrant conference hub. If you’re planning to meet colleagues or attend evening events, check the neighborhood details and nearby facilities.  \n\nJust a quick tip: before booking, verify that the hotel or accommodation you pick offers the amenities you need and is accessible during your stay. While other shuttle services may be available nearby, Paradigm House stands out with its convenient layout. Always confirm the luggage storage policy and operating hours to avoid any last-minute hassles.  \n\nStaying at Paradigm House gives you proximity to key conference venues, a friendly atmosphere, and a peaceful retreat after a busy day. It’s a hidden gem in Fort Mason—perfect for a relaxed yet productive stay.  \n\nStart your planning today, and enjoy your time in the district!",
-    "note": "Recorded unmarked live output, replayed through this decoder. It falsely flags ordinary prose.",
+    "note": "Recorded unmarked live output. The original v1 decoder at α = 0.01 falsely flagged ordinary prose. The current decoder splits its budget across two protocols and may reject that historical detection.",
     "mode": "RECORDED_LIVE_OUTPUT_TEXT_ONLY_REPLAY",
     "source": "20261014T190535.193785Z/long-seed19-unmarked"
   },

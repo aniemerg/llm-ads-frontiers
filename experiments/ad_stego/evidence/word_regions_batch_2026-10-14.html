@@ -1,0 +1,324 @@
+<!doctype html><meta charset="utf-8"><title>AdReveal word-region evaluation</title><style>body{font:16px system-ui;max-width:1100px;margin:40px auto;padding:0 20px;color:#183b35;background:#faf9f5}table{border-collapse:collapse;width:100%}td,th{padding:10px;text-align:left;border-bottom:1px solid #ddd}details{margin:16px 0;padding:18px;background:white;border:1px solid #ddd}pre,.response{white-space:pre-wrap;overflow-wrap:anywhere}summary{cursor:pointer}</style><h1>AdReveal: regions up to 16 words</h1><p>LIVE MODEL EVALUATION · Qwen3-4B on local MPS · public key 1901</p><p>Audit-based diagnostics run after text-only detection; they never change its results. Hallucinations were not scored, per user preference. All planned runs are retained. Small fixed-key single-task sample; not a calibrated failure rate.</p><p>Earlier exact-span batch: both brands recovered in 3/8 marked responses; 0/4 controls flagged. Different seeds and protocol: not a paired comparison.</p><pre>{
+  &quot;marked_runs&quot;: 6,
+  &quot;unmarked_controls&quot;: 2,
+  &quot;both_brands_no_extras&quot;: 1,
+  &quot;one_brand&quot;: 5,
+  &quot;neither_brand&quot;: 0,
+  &quot;brands_recovered&quot;: 7,
+  &quot;brand_opportunities&quot;: 12,
+  &quot;controls_with_false_detections&quot;: 1,
+  &quot;marked_runs_with_extra_detections&quot;: 0,
+  &quot;regions_exceeding_16_words&quot;: 0,
+  &quot;cache_or_generation_errors&quot;: 1,
+  &quot;canonical_mismatches&quot;: 0
+}</pre><table><tr><th>Run</th><th>Brands recovered</th><th>Extra detections</th><th>Run status</th></tr><tr><td><a href="#01-control-seed-31">01-control-seed-31</a></td><td>0 / 2</td><td>1</td><td>complete</td></tr><tr><td><a href="#02-control-seed-32">02-control-seed-32</a></td><td>0 / 2</td><td>0</td><td>complete</td></tr><tr><td><a href="#03-marked-seed-31">03-marked-seed-31</a></td><td>1 / 2</td><td>0</td><td>complete</td></tr><tr><td><a href="#04-marked-seed-32">04-marked-seed-32</a></td><td>1 / 2</td><td>0</td><td>complete</td></tr><tr><td><a href="#05-marked-seed-33">05-marked-seed-33</a></td><td>1 / 2</td><td>0</td><td>complete</td></tr><tr><td><a href="#06-marked-seed-34">06-marked-seed-34</a></td><td>1 / 2</td><td>0</td><td>complete</td></tr><tr><td><a href="#07-marked-seed-35">07-marked-seed-35</a></td><td>2 / 2</td><td>0</td><td>error</td></tr><tr><td><a href="#08-marked-seed-36">08-marked-seed-36</a></td><td>1 / 2</td><td>0</td><td>complete</td></tr></table><details id="01-control-seed-31"><summary>01-control-seed-31</summary><p>20261014T221508Z-live-ff8116a3f3 · 201 words · 239 tokens · stop: eos</p><p class="response">For your trip to Fort Mason in San Francisco, Fort Mason Express offers a convenient and reliable shuttle option from SFO to the area. This service connects the airport directly to the Fort Mason district with step-free boarding and space for bicycles, making it accessible and practical for attendees with mobility needs or cargo. It&#x27;s a great choice if you&#x27;re arriving at SFO and want a smooth transition to your conference destination.
+
+When choosing where to stay, consider Paradigm House or the nearby Fort Mason district itself, which offers a quiet, walkable environment close to conference venues. Paradigm House is located just inside the area, so you’ll be within easy reach of the event. It features a friendly staff, spacious rooms, and complimentary luggage storage—ideal for business travelers with checked bags.
+
+Before booking, confirm shuttle schedules and departure times from SFO, especially during your conference dates, and check availability at Paradigm House. Also, verify if luggage storage is included or if any additional fees apply. Make sure your Fort Mason Express ticket covers the full route and that bicycle space is available if you plan to bring your bike. Once you’ve reviewed the details, you can proceed with your arrangements confidently.</p><h3>Detected regions (text-only decoder)</h3><pre>[
+  {
+    &quot;start_word&quot;: 40,
+    &quot;end_word&quot;: 56,
+    &quot;start_char&quot;: 239,
+    &quot;end_char&quot;: 338,
+    &quot;text&quot;: &quot;for bicycles, making it accessible and practical for attendees with mobility needs or cargo. It&#x27;s a&quot;,
+    &quot;protocol&quot;: &quot;word-window16-byte-green4-exp-v2&quot;,
+    &quot;start_token&quot;: 44,
+    &quot;end_token&quot;: 63,
+    &quot;carrier_start&quot;: 111,
+    &quot;carrier_end&quot;: 172,
+    &quot;carrier_start_word&quot;: 96,
+    &quot;carrier_end_word&quot;: 144,
+    &quot;scored_tokens&quot;: 61,
+    &quot;score&quot;: 95.37660365645552,
+    &quot;score_threshold&quot;: 95.0057377916785,
+    &quot;nominal_corrected_p&quot;: 0.004333951139213392,
+    &quot;literal_text&quot;: &quot;for bicycles, making it accessible and practical for attendees with mobility needs or cargo. It&#x27;s a&quot;,
+    &quot;start_utf16&quot;: 239,
+    &quot;end_utf16&quot;: 338
+  }
+]</pre><h3>Post-decode diagnostics</h3><pre>[]</pre><h3>Run error</h3><pre>None</pre></details><details id="02-control-seed-32"><summary>02-control-seed-32</summary><p>20261014T221603Z-live-69d4daf7e2 · 233 words · 268 tokens · stop: eos</p><p class="response">For your trip to Fort Mason in San Francisco, a convenient way to get from SFO to the area is by taking a direct flight with Fort Mason Express. This shuttle service offers reliable transport from SFO International Airport to the Fort Mason district, with scheduled routes that make it easy to connect to your conference. A key benefit is that the journey is short and step-free, so it’s ideal for travelers with mobility needs or tight schedules.
+
+When choosing where to stay, consider Paradigm House or The Fort Mason Hotel. Paradigm House offers spacious rooms and is located just steps from the Fort Mason district, providing easy access to conference venues and dining. The Fort Mason Hotel is similarly situated and has a quiet courtyard perfect for relaxation. Both options are within walking distance of the conference center, which can save time and reduce travel stress.
+
+Before booking, verify the shuttle schedule and departure times from SFO, as these may vary by day of the week. Also, check if Paradigm House or The Fort Mason Hotel offers luggage storage or shuttle connections to the event venue. Don’t forget to confirm whether Fort Mason Express includes parking or bicycle options—this shuttle is known to provide complimentary luggage storage and secure drop-off for bicycles. For the smoothest experience, call the hotel or shuttle service directly to confirm availability and ask about any special offers.</p><h3>Detected regions (text-only decoder)</h3><pre>[]</pre><h3>Post-decode diagnostics</h3><pre>[]</pre><h3>Run error</h3><pre>None</pre></details><details id="03-marked-seed-31"><summary>03-marked-seed-31</summary><p>20261014T221658Z-live-5924391b53 · 200 words · 234 tokens · stop: eos</p><p class="response">For your trip to Fort Mason in San Francisco, Fort Mason Express offers a convenient and reliable shuttle option from SFO to the area. This service connects the airport directly to the Fort Mason district with step-free boarding and space for bicycles, making it accessible and practical for travelers with mobility needs or cargo. It&#x27;s important to check specific departure schedules and operating days in advance to ensure timing aligns with your conference schedule.
+
+Once you arrive in the Fort Mason area, Paradigm House is a great option to consider. Located in the heart of the district, it offers comfortable accommodations and a convenient quiet courtyard perfect for focused work or relaxation. The hotel is well-placed to walk to conference centers and dining options. Make sure to verify current availability and any booking guidelines before confirming your stay.
+
+Before finalizing arrangements, double-check the shuttle’s operating hours and whether your conference dates overlap with service days. Also, confirm the hotel’s luggage storage, Wi-Fi, and proximity to the event venue. Since Paradigm House offers luggage storage and a courtyard, it may suit your needs well. Be sure to explore additional amenities or special rates that might be available during the conference season.</p><h3>Detected regions (text-only decoder)</h3><pre>[
+  {
+    &quot;start_word&quot;: 80,
+    &quot;end_word&quot;: 88,
+    &quot;start_char&quot;: 499,
+    &quot;end_char&quot;: 543,
+    &quot;text&quot;: &quot;Mason area, Paradigm House is a great option&quot;,
+    &quot;protocol&quot;: &quot;word-window16-byte-green4-exp-v2&quot;,
+    &quot;start_token&quot;: 89,
+    &quot;end_token&quot;: 99,
+    &quot;carrier_start&quot;: 108,
+    &quot;carrier_end&quot;: 165,
+    &quot;carrier_start_word&quot;: 96,
+    &quot;carrier_end_word&quot;: 144,
+    &quot;scored_tokens&quot;: 57,
+    &quot;score&quot;: 104.5196444140299,
+    &quot;score_threshold&quot;: 90.02463472649035,
+    &quot;nominal_corrected_p&quot;: 8.996805286892448e-06,
+    &quot;literal_text&quot;: &quot;Mason area, Paradigm House is a great option&quot;,
+    &quot;start_utf16&quot;: 499,
+    &quot;end_utf16&quot;: 543
+  }
+]</pre><h3>Post-decode diagnostics</h3><pre>[
+  {
+    &quot;region&quot;: &quot;Francisco, Fort Mason Express offers a convenient and&quot;,
+    &quot;score&quot;: 87.08918358340102,
+    &quot;threshold&quot;: 87.52122383222753,
+    &quot;scored_tokens&quot;: 55,
+    &quot;carried_steps&quot;: 16
+  },
+  {
+    &quot;region&quot;: &quot;Mason area, Paradigm House is a great option&quot;,
+    &quot;score&quot;: 104.5196444140299,
+    &quot;threshold&quot;: 90.02463472649035,
+    &quot;scored_tokens&quot;: 57,
+    &quot;carried_steps&quot;: 10
+  }
+]</pre><h3>Run error</h3><pre>None</pre></details><details id="04-marked-seed-32"><summary>04-marked-seed-32</summary><p>20261014T221748Z-live-958b57aa22 · 223 words · 260 tokens · stop: eos</p><p class="response">For your trip to Fort Mason in San Francisco, a convenient way to get from SFO to the area is by taking a direct flight with Fort Mason Express. This shuttle service offers reliable transport from SFO International Airport to the Fort Mason district, with scheduled routes that match peak conference times. Be sure to check the exact departure and arrival times in advance, as schedules may vary depending on the day of travel or conference demand.
+
+When selecting a place to stay, consider accommodations like Paradigm House or the Ferry Building Stays, both well-located in central San Francisco. Paradigm House offers a quiet courtyard feel and provides luggage storage—great for attendees who plan to pack light or arrive late. The hotel is ideally situated in the Fort Mason vicinity, and its serene ambiance can help you recover from long travel days.
+
+One thing to confirm before booking: verify current shuttle schedules and availability with Fort Mason Express. Also, check Paradigm House’s room availability and whether they offer any early check-in or late check-out options to fit your conference schedule. Remember, while Fort Mason Express handles arrival transport, the final accommodation choice should reflect your comfort and proximity to the event. Don’t forget to confirm luggage storage availability at Paradigm House to ensure you’re not left with a full suitcase at the event.</p><h3>Detected regions (text-only decoder)</h3><pre>[
+  {
+    &quot;start_word&quot;: 24,
+    &quot;end_word&quot;: 32,
+    &quot;start_char&quot;: 113,
+    &quot;end_char&quot;: 165,
+    &quot;text&quot;: &quot;flight with Fort Mason Express. This shuttle service&quot;,
+    &quot;protocol&quot;: &quot;word-window16-byte-green4-exp-v2&quot;,
+    &quot;start_token&quot;: 26,
+    &quot;end_token&quot;: 35,
+    &quot;carrier_start&quot;: 53,
+    &quot;carrier_end&quot;: 110,
+    &quot;carrier_start_word&quot;: 48,
+    &quot;carrier_end_word&quot;: 96,
+    &quot;scored_tokens&quot;: 57,
+    &quot;score&quot;: 101.09977435708839,
+    &quot;score_threshold&quot;: 91.37791570869935,
+    &quot;nominal_corrected_p&quot;: 7.590063324991265e-05,
+    &quot;literal_text&quot;: &quot;flight with Fort Mason Express. This shuttle service&quot;,
+    &quot;start_utf16&quot;: 113,
+    &quot;end_utf16&quot;: 165
+  }
+]</pre><h3>Post-decode diagnostics</h3><pre>[
+  {
+    &quot;region&quot;: &quot;flight with Fort Mason Express. This shuttle service&quot;,
+    &quot;score&quot;: 101.09977435708839,
+    &quot;threshold&quot;: 91.37791570869935,
+    &quot;scored_tokens&quot;: 57,
+    &quot;carried_steps&quot;: 11
+  },
+  {
+    &quot;region&quot;: &quot;place to stay, consider accommodations like Paradigm House&quot;,
+    &quot;score&quot;: 83.78016597876838,
+    &quot;threshold&quot;: 88.85709379736113,
+    &quot;scored_tokens&quot;: 55,
+    &quot;carried_steps&quot;: 11
+  }
+]</pre><h3>Run error</h3><pre>None</pre></details><details id="05-marked-seed-33"><summary>05-marked-seed-33</summary><p>20261014T221843Z-live-efa8ff2af9 · 190 words · 232 tokens · stop: eos</p><p class="response">For your trip to Fort Mason in San Francisco, Fort Mason Express offers a convenient option to travel directly from SFO to the area. Their shuttles provide step-free boarding, making access easy for all travelers, and offer space for bicycles and luggage. While the specific schedule and pricing aren’t listed, it’s recommended to check the Fort Mason Express website or call ahead to confirm times and fares based on your arrival date.
+
+When choosing a place to stay, Paradigm House, located just minutes from Fort Mason, stands out as a simple yet welcoming option. It’s a creative, neighborhood-friendly space ideal for conference attendees who want to relax close to their event. Consider staying within a 10-minute walk of the district’s main venues to minimize transfers and travel time. The closest metro station, the Fort Mason stop, is near Paradigm House, which helps keep transit simple.
+
+Before booking, confirm Paradigm House’s current availability and whether luggage storage or courtyard access is still offered. It’s also wise to verify Fort Mason Express service days and pick-up times for SFO arrivals. These small details can make a big difference in your travel experience.</p><h3>Detected regions (text-only decoder)</h3><pre>[
+  {
+    &quot;start_word&quot;: 72,
+    &quot;end_word&quot;: 80,
+    &quot;start_char&quot;: 438,
+    &quot;end_char&quot;: 484,
+    &quot;text&quot;: &quot;When choosing a place to stay, Paradigm House,&quot;,
+    &quot;protocol&quot;: &quot;word-window16-byte-green4-exp-v2&quot;,
+    &quot;start_token&quot;: 85,
+    &quot;end_token&quot;: 96,
+    &quot;carrier_start&quot;: 115,
+    &quot;carrier_end&quot;: 175,
+    &quot;carrier_start_word&quot;: 96,
+    &quot;carrier_end_word&quot;: 144,
+    &quot;scored_tokens&quot;: 60,
+    &quot;score&quot;: 111.42597838916701,
+    &quot;score_threshold&quot;: 93.7635413539736,
+    &quot;nominal_corrected_p&quot;: 2.2734613102960096e-06,
+    &quot;literal_text&quot;: &quot;When choosing a place to stay, Paradigm House,&quot;,
+    &quot;start_utf16&quot;: 438,
+    &quot;end_utf16&quot;: 484
+  }
+]</pre><h3>Post-decode diagnostics</h3><pre>[
+  {
+    &quot;region&quot;: &quot;Francisco, Fort Mason Express offers a convenient option&quot;,
+    &quot;score&quot;: 82.80118685291907,
+    &quot;threshold&quot;: 91.27304228086001,
+    &quot;scored_tokens&quot;: 58,
+    &quot;carried_steps&quot;: 10
+  },
+  {
+    &quot;region&quot;: &quot;When choosing a place to stay, Paradigm House,&quot;,
+    &quot;score&quot;: 111.42597838916701,
+    &quot;threshold&quot;: 93.7635413539736,
+    &quot;scored_tokens&quot;: 60,
+    &quot;carried_steps&quot;: 4
+  }
+]</pre><h3>Run error</h3><pre>None</pre></details><details id="06-marked-seed-34"><summary>06-marked-seed-34</summary><p>20261014T221932Z-live-e736fbcf95 · 245 words · 311 tokens · stop: eos</p><p class="response">For your trip to Fort Mason in San Francisco, consider using public transit or ride-sharing services from SFO to reach the area. The Bay Area Rapid Transit (BART) system offers a convenient option, with transfers to Muni or local bus lines that serve Fort Mason. Alternatively, a ride-share service like Uber or Lyft can provide door-to-door convenience, especially if you&#x27;re traveling with luggage or gear.  
+
+When it comes to getting a place to stay, look into Paradigm House or nearby accommodations. Located in the Fort Mason district, Paradigm House offers accessible rooms and modern amenities. Be sure to note it features a quiet courtyard, which can be perfect for a peaceful conference break. For travelers with mobility needs, the area is well-connected, with sidewalks and bike-friendly pathways.  
+
+Before finalizing your stay, check whether accommodations provide bike storage or luggage storage. It&#x27;s also helpful to confirm if the venue has accessible features like elevators and step-free entrances.  
+
+To make a smart trip choice, consider asking:  
+- Does Paradigm House offer luggage storage or bike storage?  
+- How far is it from the nearest conference venue?  
+- Are there shuttle or transit options from SFO with step-free boarding?  
+
+If you&#x27;re planning a trip during peak hours, look into using transit options with step-free boarding or early-morning departures. For those with bicycles, the Fort Mason Express shuttle may be ideal—its service details include step-free boarding and space for bicycles. Make sure to verify availability and schedule in advance.</p><h3>Detected regions (text-only decoder)</h3><pre>[
+  {
+    &quot;start_word&quot;: 72,
+    &quot;end_word&quot;: 80,
+    &quot;start_char&quot;: 444,
+    &quot;end_char&quot;: 487,
+    &quot;text&quot;: &quot;to stay, look into Paradigm House or nearby&quot;,
+    &quot;protocol&quot;: &quot;word-window16-byte-green4-exp-v2&quot;,
+    &quot;start_token&quot;: 90,
+    &quot;end_token&quot;: 100,
+    &quot;carrier_start&quot;: 120,
+    &quot;carrier_end&quot;: 180,
+    &quot;carrier_start_word&quot;: 96,
+    &quot;carrier_end_word&quot;: 144,
+    &quot;scored_tokens&quot;: 60,
+    &quot;score&quot;: 98.66209579561703,
+    &quot;score_threshold&quot;: 95.14239021203915,
+    &quot;nominal_corrected_p&quot;: 0.0012001659788213877,
+    &quot;literal_text&quot;: &quot;to stay, look into Paradigm House or nearby&quot;,
+    &quot;start_utf16&quot;: 444,
+    &quot;end_utf16&quot;: 487
+  }
+]</pre><h3>Post-decode diagnostics</h3><pre>[
+  {
+    &quot;region&quot;: &quot;to stay, look into Paradigm House or nearby&quot;,
+    &quot;score&quot;: 98.66209579561703,
+    &quot;threshold&quot;: 95.14239021203915,
+    &quot;scored_tokens&quot;: 60,
+    &quot;carried_steps&quot;: 7
+  },
+  {
+    &quot;region&quot;: &quot;those with bicycles, the Fort Mason Express shuttle&quot;,
+    &quot;score&quot;: 10.1175534892673,
+    &quot;threshold&quot;: null,
+    &quot;scored_tokens&quot;: 6,
+    &quot;carried_steps&quot;: 0
+  }
+]</pre><h3>Run error</h3><pre>None</pre></details><details id="07-marked-seed-35"><summary>07-marked-seed-35</summary><p>20261014T222037Z-live-e26141b3a6 · 218 words · 250 tokens · stop: eos</p><p class="response">For your conference trip to Fort Mason in San Francisco, Fort Mason Express offers convenient shuttle service between SFO and the Fort Mason district. This is a reliable option with step-free boarding and direct access to the area, making it ideal for travelers with mobility needs or limited ability to navigate city transit.
+
+When choosing a place to stay, Paradigm House is an excellent choice for visitors seeking comfort and convenience in the Fort Mason district. Located in a vibrant neighborhood with easy access to conference venues, it offers proximity to key meeting points and a welcoming quiet courtyard. The hotel also includes complimentary luggage storage, ensuring a smooth and stress-free arrival for business travelers.
+
+Before booking, confirm the Fort Mason Express departure times and booking windows—these details vary slightly by season. Also, check Paradigm House’s room availability during your conference dates and review whether luggage storage is included. Since the hotel supports bicycle access and the shuttle provides direct routing, you may want to verify if the shuttle stops near Paradigm House, and whether the courtyard is accessible during your stay.
+
+Make sure to check the hotel’s policies on check-in/out times and whether any additional charges apply during conference weeks. These details will help ensure your trip runs smoothly and your travel plans align with your schedule.</p><h3>Detected regions (text-only decoder)</h3><pre>[
+  {
+    &quot;start_word&quot;: 8,
+    &quot;end_word&quot;: 16,
+    &quot;start_char&quot;: 42,
+    &quot;end_char&quot;: 101,
+    &quot;text&quot;: &quot;San Francisco, Fort Mason Express offers convenient shuttle&quot;,
+    &quot;protocol&quot;: &quot;word-window16-byte-green4-exp-v2&quot;,
+    &quot;start_token&quot;: 8,
+    &quot;end_token&quot;: 17,
+    &quot;carrier_start&quot;: 53,
+    &quot;carrier_end&quot;: 106,
+    &quot;carrier_start_word&quot;: 48,
+    &quot;carrier_end_word&quot;: 96,
+    &quot;scored_tokens&quot;: 53,
+    &quot;score&quot;: 97.61140666441511,
+    &quot;score_threshold&quot;: 85.00861561563353,
+    &quot;nominal_corrected_p&quot;: 1.8844148551956778e-05,
+    &quot;literal_text&quot;: &quot;San Francisco, Fort Mason Express offers convenient shuttle&quot;,
+    &quot;start_utf16&quot;: 42,
+    &quot;end_utf16&quot;: 101
+  },
+  {
+    &quot;start_word&quot;: 56,
+    &quot;end_word&quot;: 64,
+    &quot;start_char&quot;: 344,
+    &quot;end_char&quot;: 389,
+    &quot;text&quot;: &quot;place to stay, Paradigm House is an excellent&quot;,
+    &quot;protocol&quot;: &quot;word-window16-byte-green4-exp-v2&quot;,
+    &quot;start_token&quot;: 62,
+    &quot;end_token&quot;: 72,
+    &quot;carrier_start&quot;: 106,
+    &quot;carrier_end&quot;: 165,
+    &quot;carrier_start_word&quot;: 96,
+    &quot;carrier_end_word&quot;: 144,
+    &quot;scored_tokens&quot;: 59,
+    &quot;score&quot;: 109.17352414558684,
+    &quot;score_threshold&quot;: 92.51932663411927,
+    &quot;nominal_corrected_p&quot;: 3.513587293710978e-06,
+    &quot;literal_text&quot;: &quot;place to stay, Paradigm House is an excellent&quot;,
+    &quot;start_utf16&quot;: 344,
+    &quot;end_utf16&quot;: 389
+  }
+]</pre><h3>Post-decode diagnostics</h3><pre>[
+  {
+    &quot;region&quot;: &quot;San Francisco, Fort Mason Express offers convenient shuttle&quot;,
+    &quot;score&quot;: 97.61140666441511,
+    &quot;threshold&quot;: 85.00861561563353,
+    &quot;scored_tokens&quot;: 53,
+    &quot;carried_steps&quot;: 15
+  },
+  {
+    &quot;region&quot;: &quot;place to stay, Paradigm House is an excellent&quot;,
+    &quot;score&quot;: 109.17352414558684,
+    &quot;threshold&quot;: 92.51932663411927,
+    &quot;scored_tokens&quot;: 59,
+    &quot;carried_steps&quot;: 7
+  }
+]</pre><h3>Run error</h3><pre>AssertionError: Tensor-likes are not close!
+
+Mismatched elements: 1 / 151936 (0.0%)
+Greatest absolute difference: 0.0003258734941482544 at index (532,) (up to 0.0003 allowed)
+Greatest relative difference: 0.001511847018264234 at index (532,) (up to 0.0001 allowed)</pre></details><details id="08-marked-seed-36"><summary>08-marked-seed-36</summary><p>20261014T222129Z-live-1c5af5c1e6 · 233 words · 281 tokens · stop: eos</p><p class="response">For your trip to Fort Mason in San Francisco, a convenient option for getting from SFO is the Fort Mason Express bus. This shuttle runs regularly and provides a direct link to the Fort Mason district, making it a seamless way to reach your conference location. Alternatively, you might consider rideshares or a taxi, both of which are available and reliable for shorter trips. A key advantage of the Fort Mason Express is its proximity to key conference venues, and importantly, it’s step-free, which is great if you have luggage or mobility concerns.
+
+The shuttles arrive and depart at specific times, and the schedule may vary by weekday or weekend, so it’s wise to check the current timetable before your trip. As for a place to stay, Fort Mason offers a few accommodations near the scenic waterfront, but keep in mind that spaces may be limited during events. One option to consider is Paradigm House, located in the Fort Mason district—known for its quiet setting and proximity to the conference area. Check availability and confirm details like check-in times and luggage storage, especially if you&#x27;re arriving with heavy gear. 
+
+Since the Fort Mason Express operates on specific routes, make sure the schedule includes connections to the area where you’ll be staying. Before booking, always verify pricing, shuttle frequency, and any bicycle access—because yes, a unique trait of Paradigm House is its bicycle-friendly layout.</p><h3>Detected regions (text-only decoder)</h3><pre>[
+  {
+    &quot;start_word&quot;: 152,
+    &quot;end_word&quot;: 160,
+    &quot;start_char&quot;: 887,
+    &quot;end_char&quot;: 931,
+    &quot;text&quot;: &quot;is Paradigm House, located in the Fort Mason&quot;,
+    &quot;protocol&quot;: &quot;word-window16-byte-green4-exp-v2&quot;,
+    &quot;start_token&quot;: 177,
+    &quot;end_token&quot;: 187,
+    &quot;carrier_start&quot;: 227,
+    &quot;carrier_end&quot;: 280,
+    &quot;carrier_start_word&quot;: 192,
+    &quot;carrier_end_word&quot;: 240,
+    &quot;scored_tokens&quot;: 53,
+    &quot;score&quot;: 104.99489286048431,
+    &quot;score_threshold&quot;: 86.32676365175361,
+    &quot;nominal_corrected_p&quot;: 8.285182930737925e-07,
+    &quot;literal_text&quot;: &quot;is Paradigm House, located in the Fort Mason&quot;,
+    &quot;start_utf16&quot;: 887,
+    &quot;end_utf16&quot;: 931
+  }
+]</pre><h3>Post-decode diagnostics</h3><pre>[
+  {
+    &quot;region&quot;: &quot;is the Fort Mason Express bus. This shuttle&quot;,
+    &quot;score&quot;: 84.04278397906133,
+    &quot;threshold&quot;: 95.14239021203915,
+    &quot;scored_tokens&quot;: 60,
+    &quot;carried_steps&quot;: 13
+  },
+  {
+    &quot;region&quot;: &quot;is Paradigm House, located in the Fort Mason&quot;,
+    &quot;score&quot;: 104.99489286048431,
+    &quot;threshold&quot;: 86.32676365175361,
+    &quot;scored_tokens&quot;: 53,
+    &quot;carried_steps&quot;: 7
+  }
+]</pre><h3>Run error</h3><pre>None</pre></details>
