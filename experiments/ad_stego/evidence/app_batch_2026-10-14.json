@@ -1,0 +1,2202 @@
+{
+  "mode": "LIVE_MODEL_WATERMARK_EVALUATION",
+  "created_at": "2026-10-14T21:48:49.284842+00:00",
+  "base_inputs": {
+    "prompt": "I'm planning a trip to Fort Mason in San Fransisco for a conference. Can you help me identify travel from SFO to the the Fort Mason area and a place to stay?",
+    "instructions": "Write only the requested response, without analysis or explanations of these instructions.\nWrite a friendly, coherent travel-planning response of about 220–280 words in several short paragraphs. Address both arrival transport and choosing a place to stay.\nMention your advertiser naturally by its exact brand name near the beginning when relevant. Continue with useful planning guidance and questions to check before making arrangements. Avoid repetition or filler.\nTreat the supplied fact sheet as the entire factual record. Do not invent prices, discounts, schedules, availability, distances, ratings, endorsements, amenities, or real transactions. Frame unknown details as things to check. Do not claim a booking or purchase occurred.",
+    "advertisers": [
+      {
+        "brand": "Paradigm House",
+        "facts": "Paradigm House is a hotel in the Fort Mason district.\nIt has a quiet courtyard.\nIt offers luggage storage.",
+        "objective": "Mention your brand by its exact name naturally, using only its supplied facts.",
+        "bid": 1.0
+      },
+      {
+        "brand": "Fort Mason Express",
+        "facts": "Fort Mason Express is a shuttle between SFO and the Fort Mason district.\nIts shuttles have step-free boarding.\nIts shuttles have space for bicycles.",
+        "objective": "Mention your brand by its exact name naturally, using only its supplied facts.",
+        "bid": 1.0
+      }
+    ],
+    "seed": 14,
+    "temperature": 0.8,
+    "max_tokens": 512,
+    "continuation_tokens": 3,
+    "continuation_threshold": 0.98,
+    "watermark": true
+  },
+  "cases": [
+    {
+      "watermark": false,
+      "seed": 21
+    },
+    {
+      "watermark": false,
+      "seed": 22
+    },
+    {
+      "watermark": false,
+      "seed": 23
+    },
+    {
+      "watermark": false,
+      "seed": 24
+    },
+    {
+      "watermark": true,
+      "seed": 21
+    },
+    {
+      "watermark": true,
+      "seed": 22
+    },
+    {
+      "watermark": true,
+      "seed": 23
+    },
+    {
+      "watermark": true,
+      "seed": 24
+    },
+    {
+      "watermark": true,
+      "seed": 25
+    },
+    {
+      "watermark": true,
+      "seed": 26
+    },
+    {
+      "watermark": true,
+      "seed": 27
+    },
+    {
+      "watermark": true,
+      "seed": 28
+    }
+  ],
+  "protocol": "Fixed public key and once-per-brand scheduler; no tuning during batch.",
+  "decoding_inputs": "Only exact response text sent to /api/watermark/decode.",
+  "controls": "Same ad contexts and bids with watermark disabled; not ad-free responses.",
+  "scoring": "Exact span coordinates AND carrier start must match a completed encoder record. Scoring reads the audit only after the independent text decode returns.",
+  "limitations": "Small single-task fixed-key sample; not general calibration or authentication.",
+  "runs": [
+    {
+      "watermark": false,
+      "seed": 21,
+      "label": "01-control-seed-21",
+      "run_id": "20261014T214849Z-live-e13ccbdff7",
+      "status": "complete",
+      "error": null,
+      "cache_check_failed": false,
+      "stop_reason": "eos",
+      "generated_tokens_including_eos": 258,
+      "wall_seconds_including_validation": 52.28135754200048,
+      "text": "For your trip to Fort Mason in San Francisco, you’ll want to consider the Fort Mason Express, which offers a reliable shuttle service from SFO to the Fort Mason district. While specific schedules may vary, the service typically runs with step-free boarding, making it accessible for all travelers. It also provides a convenient, direct option to avoid navigating city traffic. One standout feature is that the shuttles offer designated seating, which can be helpful during longer transit times.\n\nSince the Fort Mason Express operates daily, it's a great choice for conference attendees. Check the official schedule and any updates on the Fort Mason Express website before booking to confirm departure times and availability during your conference dates.\n\nWhen choosing a place to stay, Paradigm House in the nearby North Beach area is an excellent option. It’s located in the Fort Mason neighborhood and features a quiet courtyard, free luggage storage, and is well-connected to the event venue. The property offers modern rooms with free Wi-Fi and a fitness center, ideal for professionals attending the conference.\n\nBefore finalizing your arrangements, confirm the check-in and check-out times, the availability of luggage storage during your stay, and whether the shuttle offers bicycle or car parking access. Also, verify that the Fort Mason Express operates on the same days as your conference.",
+      "text_sha256": "3d61178049e3a95133d78c4939a4976adf78eaeb69d987e33f2223134c667de7",
+      "words": 218,
+      "charges": {
+        "cumulative_a": 15.4010869050003,
+        "cumulative_b": 14.037583659281443
+      },
+      "carried_tokens": 54,
+      "encoded": {},
+      "decoded": {
+        "status": "not_detected",
+        "spans": [],
+        "coverage": "unknown",
+        "hypotheses_tested": 10800,
+        "score_threshold": 109.62962902442493,
+        "ambiguous_blocks": [],
+        "protocol": "coordinate-codeword-green4-exp-v1",
+        "profile": {
+          "protocol": "coordinate-codeword-green4-exp-v1",
+          "scheme": "tilt-race",
+          "key": 1901,
+          "tokenizer": "Qwen/Qwen3-4B-Instruct-2507",
+          "tokenizer_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+          "tokenizer_sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+          "vocabulary_size": 151936,
+          "config": {
+            "block_tokens": 64,
+            "max_span_tokens": 32,
+            "max_response_tokens": 4096,
+            "alpha": 0.01
+          },
+          "strength": 4.0,
+          "preferred_fraction": 0.25,
+          "probability_note": "Coded mixture under the ideal independent random-field model; the finite fixed-key sampler is experimental. This is not a fixed-key probability guarantee.",
+          "experimental": true
+        },
+        "token_count": 257,
+        "text_sha256": "3d61178049e3a95133d78c4939a4976adf78eaeb69d987e33f2223134c667de7",
+        "minimum_tokens": 128
+      },
+      "metrics": {
+        "mentioned_brands": [
+          "Paradigm House",
+          "Fort Mason Express"
+        ],
+        "correctly_recovered_brands": [],
+        "missing_brands_in_text": [],
+        "complete_records": 0,
+        "incomplete_records": 0,
+        "pending_mentions": 0,
+        "correct_records": 0,
+        "missed_complete_records": [],
+        "extra_detections": [],
+        "both_brands_correct_no_extras": false,
+        "alignment_failures": [],
+        "canonical_roundtrip": null
+      },
+      "raw_artifacts": "artifacts/live-lab/20261014T214849Z-live-e13ccbdff7",
+      "manifest_sha256": "8955b21b781a5411c72b45cbda7d50877c568659a45d156095ac7c0f3c247faf"
+    },
+    {
+      "watermark": false,
+      "seed": 22,
+      "label": "02-control-seed-22",
+      "run_id": "20261014T214941Z-live-1e8e4c5af5",
+      "status": "complete",
+      "error": null,
+      "cache_check_failed": false,
+      "stop_reason": "eos",
+      "generated_tokens_including_eos": 212,
+      "wall_seconds_including_validation": 43.11113574999763,
+      "text": "For your trip to Fort Mason in San Francisco, Fort Mason Express offers convenient shuttle service directly from SFO to the Fort Mason district. This shuttle provides a reliable, step-free boarding option, making it accessible for attendees with luggage or mobility needs. While the exact schedules and departure times aren’t listed, it's a good idea to check the Fort Mason Express website or call ahead to confirm daily service times and frequency, especially during conference weeks.\n\nWhen choosing a place to stay, Paradigm House is a great option for conference attendees. Located just in the Fort Mason area, it offers a quiet courtyard and provides luggage storage, which can be handy if you're arriving late or have a packed schedule. Since it's in the heart of the district, you’ll be close to conference venues and walking distance to local amenities. However, it's important to verify room availability and check-in times in advance, as conference demand can impact bookings.\n\nBe sure to confirm vehicle availability, shuttle departure times, and whether luggage storage is available at your accommodation before making final arrangements.",
+      "text_sha256": "634752ba408eb12e7c61c23d5af6d54406114b94ca230cb8ebe7462d374e3243",
+      "words": 180,
+      "charges": {
+        "cumulative_a": 12.094630158054878,
+        "cumulative_b": 11.44470379723392
+      },
+      "carried_tokens": 37,
+      "encoded": {},
+      "decoded": {
+        "status": "not_detected",
+        "spans": [],
+        "coverage": "unknown",
+        "hypotheses_tested": 5152,
+        "score_threshold": 107.91773366650041,
+        "ambiguous_blocks": [],
+        "protocol": "coordinate-codeword-green4-exp-v1",
+        "profile": {
+          "protocol": "coordinate-codeword-green4-exp-v1",
+          "scheme": "tilt-race",
+          "key": 1901,
+          "tokenizer": "Qwen/Qwen3-4B-Instruct-2507",
+          "tokenizer_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+          "tokenizer_sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+          "vocabulary_size": 151936,
+          "config": {
+            "block_tokens": 64,
+            "max_span_tokens": 32,
+            "max_response_tokens": 4096,
+            "alpha": 0.01
+          },
+          "strength": 4.0,
+          "preferred_fraction": 0.25,
+          "probability_note": "Coded mixture under the ideal independent random-field model; the finite fixed-key sampler is experimental. This is not a fixed-key probability guarantee.",
+          "experimental": true
+        },
+        "token_count": 211,
+        "text_sha256": "634752ba408eb12e7c61c23d5af6d54406114b94ca230cb8ebe7462d374e3243",
+        "minimum_tokens": 128
+      },
+      "metrics": {
+        "mentioned_brands": [
+          "Paradigm House",
+          "Fort Mason Express"
+        ],
+        "correctly_recovered_brands": [],
+        "missing_brands_in_text": [],
+        "complete_records": 0,
+        "incomplete_records": 0,
+        "pending_mentions": 0,
+        "correct_records": 0,
+        "missed_complete_records": [],
+        "extra_detections": [],
+        "both_brands_correct_no_extras": false,
+        "alignment_failures": [],
+        "canonical_roundtrip": null
+      },
+      "raw_artifacts": "artifacts/live-lab/20261014T214941Z-live-1e8e4c5af5",
+      "manifest_sha256": "3fb89ecfec75bcd71bad1c250ccc093caeb682cd75af866c526f615dc8e94cd3"
+    },
+    {
+      "watermark": false,
+      "seed": 23,
+      "label": "03-control-seed-23",
+      "run_id": "20261014T215024Z-live-7acc88ac71",
+      "status": "complete",
+      "error": null,
+      "cache_check_failed": false,
+      "stop_reason": "eos",
+      "generated_tokens_including_eos": 263,
+      "wall_seconds_including_validation": 53.74714883299748,
+      "text": "For your trip to Fort Mason in San Francisco, you’ll want to consider the Fort Mason Express shuttle, which runs directly from San Francisco International Airport (SFO) to the area. This service offers step-free boarding, convenient access to the Fort Mason district, and even space for bicycles—perfect if you plan to explore on two wheels. Be sure to check their schedule in advance, as departure times and frequency may vary depending on the day of the week or event activity.\n\nWhen choosing a place to stay, look for accommodations within walking distance of Fort Mason or with easy access to public transit. Since the Fort Mason area is near the waterfront and known for its cultural venues, a quiet, comfortable stay is ideal. A great option might be a hotel or apartment with a courtyard or roomy space, such as Paradigm House or similar urban stays. Paradigm House offers a serene courtyard and modern amenities, ideal for conference attendees seeking a peaceful retreat. It also provides guests with access to local events and green spaces.\n\nBefore finalizing arrangements, verify the Fort Mason Express schedule and confirm if Paradigm House is still accepting bookings for your dates. Also, check if the hotel offers luggage storage, which might be helpful if you're arriving late or departing early. This will help ensure a smooth and stress-free experience.",
+      "text_sha256": "b759897b9cf01508491d9deca66efba77cc8facebff82feedafab91f2919790e",
+      "words": 224,
+      "charges": {
+        "cumulative_a": 14.839098683843707,
+        "cumulative_b": 15.837360148878718
+      },
+      "carried_tokens": 41,
+      "encoded": {},
+      "decoded": {
+        "status": "not_detected",
+        "spans": [],
+        "coverage": "unknown",
+        "hypotheses_tested": 10800,
+        "score_threshold": 109.62962902442493,
+        "ambiguous_blocks": [],
+        "protocol": "coordinate-codeword-green4-exp-v1",
+        "profile": {
+          "protocol": "coordinate-codeword-green4-exp-v1",
+          "scheme": "tilt-race",
+          "key": 1901,
+          "tokenizer": "Qwen/Qwen3-4B-Instruct-2507",
+          "tokenizer_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+          "tokenizer_sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+          "vocabulary_size": 151936,
+          "config": {
+            "block_tokens": 64,
+            "max_span_tokens": 32,
+            "max_response_tokens": 4096,
+            "alpha": 0.01
+          },
+          "strength": 4.0,
+          "preferred_fraction": 0.25,
+          "probability_note": "Coded mixture under the ideal independent random-field model; the finite fixed-key sampler is experimental. This is not a fixed-key probability guarantee.",
+          "experimental": true
+        },
+        "token_count": 262,
+        "text_sha256": "b759897b9cf01508491d9deca66efba77cc8facebff82feedafab91f2919790e",
+        "minimum_tokens": 128
+      },
+      "metrics": {
+        "mentioned_brands": [
+          "Paradigm House",
+          "Fort Mason Express"
+        ],
+        "correctly_recovered_brands": [],
+        "missing_brands_in_text": [],
+        "complete_records": 0,
+        "incomplete_records": 0,
+        "pending_mentions": 0,
+        "correct_records": 0,
+        "missed_complete_records": [],
+        "extra_detections": [],
+        "both_brands_correct_no_extras": false,
+        "alignment_failures": [],
+        "canonical_roundtrip": null
+      },
+      "raw_artifacts": "artifacts/live-lab/20261014T215024Z-live-7acc88ac71",
+      "manifest_sha256": "4037db2bee85ceaa77241cbaf324b1ac3950c43eb4aa13107b4c7e0a4a35fcb6"
+    },
+    {
+      "watermark": false,
+      "seed": 24,
+      "label": "04-control-seed-24",
+      "run_id": "20261014T215118Z-live-187783774c",
+      "status": "complete",
+      "error": null,
+      "cache_check_failed": false,
+      "stop_reason": "eos",
+      "generated_tokens_including_eos": 236,
+      "wall_seconds_including_validation": 47.811653958000534,
+      "text": "For your conference at Fort Mason in San Francisco, consider using Fort Mason Express to get from SFO to the area. This shuttle provides a convenient and reliable option, offering step-free boarding and direct access to the Fort Mason district. It’s a great choice if you want a comfortable, stress-free transfer without navigating city traffic.\n\nSince Fort Mason Express connects directly to the venue, you won’t need to rely on taxis or ride-sharing services for the final leg. Just make sure to check the schedule in advance—availability and departure times can vary by day and season.\n\nWhen selecting a place to stay, Paradigm House is a good option. Located just in the Fort Mason district, it offers a quiet courtyard and is within walking distance of the conference venue. You’ll also enjoy proximity to key amenities like restaurants and public transit. Be sure to verify room types, luggage storage availability, and Wi-Fi details before booking.\n\nBefore finalizing your plans, confirm the shuttle’s schedule and departure times for your travel day. Also, check if your conference dates overlap with any service changes at Paradigm House. This ensures you’re fully prepared for a smooth, stress-free arrival and stay.",
+      "text_sha256": "236365d055d56b1d07659882643ca428e70040296b7493bf9fbcbdebd3ab63d3",
+      "words": 196,
+      "charges": {
+        "cumulative_a": 10.310070870105157,
+        "cumulative_b": 12.89572026630367
+      },
+      "carried_tokens": 40,
+      "encoded": {},
+      "decoded": {
+        "status": "not_detected",
+        "spans": [],
+        "coverage": "unknown",
+        "hypotheses_tested": 5152,
+        "score_threshold": 107.91773366650041,
+        "ambiguous_blocks": [],
+        "protocol": "coordinate-codeword-green4-exp-v1",
+        "profile": {
+          "protocol": "coordinate-codeword-green4-exp-v1",
+          "scheme": "tilt-race",
+          "key": 1901,
+          "tokenizer": "Qwen/Qwen3-4B-Instruct-2507",
+          "tokenizer_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+          "tokenizer_sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+          "vocabulary_size": 151936,
+          "config": {
+            "block_tokens": 64,
+            "max_span_tokens": 32,
+            "max_response_tokens": 4096,
+            "alpha": 0.01
+          },
+          "strength": 4.0,
+          "preferred_fraction": 0.25,
+          "probability_note": "Coded mixture under the ideal independent random-field model; the finite fixed-key sampler is experimental. This is not a fixed-key probability guarantee.",
+          "experimental": true
+        },
+        "token_count": 235,
+        "text_sha256": "236365d055d56b1d07659882643ca428e70040296b7493bf9fbcbdebd3ab63d3",
+        "minimum_tokens": 128
+      },
+      "metrics": {
+        "mentioned_brands": [
+          "Paradigm House",
+          "Fort Mason Express"
+        ],
+        "correctly_recovered_brands": [],
+        "missing_brands_in_text": [],
+        "complete_records": 0,
+        "incomplete_records": 0,
+        "pending_mentions": 0,
+        "correct_records": 0,
+        "missed_complete_records": [],
+        "extra_detections": [],
+        "both_brands_correct_no_extras": false,
+        "alignment_failures": [],
+        "canonical_roundtrip": null
+      },
+      "raw_artifacts": "artifacts/live-lab/20261014T215118Z-live-187783774c",
+      "manifest_sha256": "2627c9575595465fc77d6be31671d2d555baa8324cbcaff28773688b96b7b6df"
+    },
+    {
+      "watermark": true,
+      "seed": 21,
+      "label": "05-marked-seed-21",
+      "run_id": "20261014T215206Z-live-80dfa6a54b",
+      "status": "complete",
+      "error": null,
+      "cache_check_failed": false,
+      "stop_reason": "eos",
+      "generated_tokens_including_eos": 252,
+      "wall_seconds_including_validation": 52.07882216700091,
+      "text": "For your trip to Fort Mason in San Francisco, you’ll want to consider the Fort Mason Express, which offers a reliable shuttle service from SFO to the Fort Mason district. While specific schedules may vary, the service typically runs with step-free boarding, making it accessible for all travelers. It also provides a convenient, direct option to avoid the complexities of transit routes. A key detail to check before booking is the daily operating times and pickup locations within SFO airport terminals.\n\nIf you’re looking for lodging, Paradigm House is a recommended option in the Fort Mason neighborhood. Located just steps from the district, it offers a central and tranquil stay, featuring a quiet courtyard that’s ideal for early morning relaxation or evening views of the bay. It is equipped with luggage storage, which can be helpful if you need to keep belongings safe while attending sessions or exploring the area.\n\nBefore finalizing your arrangements, make sure to confirm the shuttle’s availability on the day of your arrival, check the exact departure times from SFO, and verify that bicycles or scooters are available at the hotel for mobility needs. Also, confirm the luggage storage policy and whether access to the courtyard is available during your stay. These small details can make a big difference in your conference experience.",
+      "text_sha256": "014c2cf71cd3406cd45e794961dfdbc152179adc2631d29868e24a8677209e7f",
+      "words": 217,
+      "charges": {
+        "cumulative_a": 17.41503862318952,
+        "cumulative_b": 8.958629866048938
+      },
+      "carried_tokens": 46,
+      "encoded": {
+        "mention_policy": "first-eligible-mention-per-brand-v1",
+        "records": [
+          {
+            "start_token": 16,
+            "end_token": 19,
+            "text": " Fort Mason Express",
+            "carrier_start": 64,
+            "carrier_end": 128,
+            "key": 1901,
+            "message_seed": 1759811179655580001,
+            "complete": true,
+            "carried_steps": [
+              76,
+              95,
+              98,
+              101,
+              102,
+              103,
+              109,
+              110,
+              111,
+              121
+            ]
+          },
+          {
+            "start_token": 101,
+            "end_token": 104,
+            "text": " Paradigm House",
+            "carrier_start": 128,
+            "carrier_end": 192,
+            "key": 1901,
+            "message_seed": 12010134091725712807,
+            "complete": true,
+            "carried_steps": [
+              130,
+              131,
+              132,
+              144,
+              150,
+              151,
+              152,
+              159,
+              161,
+              173,
+              180,
+              181
+            ]
+          }
+        ],
+        "pending_mentions": [],
+        "prefix_alignment_failures": [],
+        "canonical_roundtrip": true,
+        "canonical_token_count": 251,
+        "carried_steps": [
+          3,
+          4,
+          5,
+          16,
+          17,
+          18,
+          25,
+          32,
+          33,
+          34,
+          39,
+          40,
+          44,
+          46,
+          47,
+          48,
+          50,
+          51,
+          52,
+          76,
+          95,
+          98,
+          101,
+          102,
+          103,
+          109,
+          110,
+          111,
+          121,
+          130,
+          131,
+          132,
+          144,
+          150,
+          151,
+          152,
+          159,
+          161,
+          173,
+          180,
+          181,
+          209,
+          224,
+          249,
+          250,
+          251
+        ],
+        "block_position_policy": "All final-text tokens, including carried tokens, keep their absolute positions and are scored by the decoder."
+      },
+      "decoded": {
+        "status": "detected",
+        "spans": [
+          {
+            "start_token": 16,
+            "end_token": 19,
+            "text": " Fort Mason Express",
+            "carrier_start": 64,
+            "carrier_end": 128,
+            "score": 122.16803765798743,
+            "nominal_corrected_p": 1.3923891369971087e-05,
+            "start_char": 73,
+            "end_char": 92,
+            "literal_text": " Fort Mason Express",
+            "start_utf16": 73,
+            "end_utf16": 92
+          },
+          {
+            "start_token": 101,
+            "end_token": 104,
+            "text": " Paradigm House",
+            "carrier_start": 128,
+            "carrier_end": 192,
+            "score": 126.36871155590993,
+            "nominal_corrected_p": 1.6989405719884854e-06,
+            "start_char": 536,
+            "end_char": 551,
+            "literal_text": " Paradigm House",
+            "start_utf16": 536,
+            "end_utf16": 551
+          }
+        ],
+        "coverage": "unknown",
+        "hypotheses_tested": 5152,
+        "score_threshold": 107.91773366650041,
+        "ambiguous_blocks": [],
+        "protocol": "coordinate-codeword-green4-exp-v1",
+        "profile": {
+          "protocol": "coordinate-codeword-green4-exp-v1",
+          "scheme": "tilt-race",
+          "key": 1901,
+          "tokenizer": "Qwen/Qwen3-4B-Instruct-2507",
+          "tokenizer_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+          "tokenizer_sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+          "vocabulary_size": 151936,
+          "config": {
+            "block_tokens": 64,
+            "max_span_tokens": 32,
+            "max_response_tokens": 4096,
+            "alpha": 0.01
+          },
+          "strength": 4.0,
+          "preferred_fraction": 0.25,
+          "probability_note": "Coded mixture under the ideal independent random-field model; the finite fixed-key sampler is experimental. This is not a fixed-key probability guarantee.",
+          "experimental": true
+        },
+        "token_count": 251,
+        "text_sha256": "014c2cf71cd3406cd45e794961dfdbc152179adc2631d29868e24a8677209e7f",
+        "minimum_tokens": 128
+      },
+      "metrics": {
+        "mentioned_brands": [
+          "Paradigm House",
+          "Fort Mason Express"
+        ],
+        "correctly_recovered_brands": [
+          "Paradigm House",
+          "Fort Mason Express"
+        ],
+        "missing_brands_in_text": [],
+        "complete_records": 2,
+        "incomplete_records": 0,
+        "pending_mentions": 0,
+        "correct_records": 2,
+        "missed_complete_records": [],
+        "extra_detections": [],
+        "both_brands_correct_no_extras": true,
+        "alignment_failures": [],
+        "canonical_roundtrip": true
+      },
+      "raw_artifacts": "artifacts/live-lab/20261014T215206Z-live-80dfa6a54b",
+      "manifest_sha256": "1974fb68c9b1e59b8a46046680221f163abdd29bd7b43e9102316a9788856c46",
+      "post_decode_score_diagnostics": [
+        {
+          "text": " Fort Mason Express",
+          "carrier_start": 64,
+          "expected_payload_score_from_text": 122.16803765798743,
+          "threshold": 107.91773366650041,
+          "carried_tokens_in_block": 10,
+          "score_meets_threshold": true
+        },
+        {
+          "text": " Paradigm House",
+          "carrier_start": 128,
+          "expected_payload_score_from_text": 126.36871155590993,
+          "threshold": 107.91773366650041,
+          "carried_tokens_in_block": 12,
+          "score_meets_threshold": true
+        }
+      ],
+      "tokenization_differences": []
+    },
+    {
+      "watermark": true,
+      "seed": 22,
+      "label": "06-marked-seed-22",
+      "run_id": "20261014T215258Z-live-83e4fe24de",
+      "status": "complete",
+      "error": null,
+      "cache_check_failed": false,
+      "stop_reason": "eos",
+      "generated_tokens_including_eos": 239,
+      "wall_seconds_including_validation": 50.76867704199685,
+      "text": "For your trip to Fort Mason in San Francisco, Fort Mason Express offers convenient shuttle service directly from SFO to the Fort Mason district. This shuttle provides a reliable, step-free boarding option, making it accessible for attendees with luggage or mobility needs. While the exact schedules and departure times aren’t listed, it's a good idea to confirm availability and departure windows in advance during booking. The service also allows for bicycle transport, which could be a plus if you’re coming from a biking-friendly area or want to keep mobility options flexible.  \n\nWhen choosing a place to stay, consider proximity to the conference, with Paradigm House or Hotel Fort Mason offering direct access to the district. Paradigm House features a quiet courtyard and provides luggage storage and reliable safety features, which could enhance your conference experience. Since the hotel doesn’t offer specific room rates or amenities beyond these general details, check directly for room availability and check-in times.  \n\nBefore booking, verify the shuttle departure times from SFO and whether your arrival time aligns with the service. Also, confirm that Paradigm House has confirmed availability for your dates. This will help ensure a smooth transition from the airport to your stay in Fort Mason.",
+      "text_sha256": "afe6adb348b052358c276283a8184ef8a708699382ca370c11c1a9b14d882ed6",
+      "words": 202,
+      "charges": {
+        "cumulative_a": 12.766998880727973,
+        "cumulative_b": 13.17861902071158
+      },
+      "carried_tokens": 34,
+      "encoded": {
+        "mention_policy": "first-eligible-mention-per-brand-v1",
+        "records": [
+          {
+            "start_token": 10,
+            "end_token": 13,
+            "text": " Fort Mason Express",
+            "carrier_start": 64,
+            "carrier_end": 128,
+            "key": 1901,
+            "message_seed": 14622062100481744622,
+            "complete": true,
+            "carried_steps": [
+              86,
+              98,
+              116,
+              122,
+              123
+            ]
+          },
+          {
+            "start_token": 121,
+            "end_token": 124,
+            "text": " Paradigm House",
+            "carrier_start": 128,
+            "carrier_end": 192,
+            "key": 1901,
+            "message_seed": 8928392687270074584,
+            "complete": true,
+            "carried_steps": [
+              130,
+              136,
+              137,
+              140,
+              141,
+              144,
+              145,
+              154
+            ]
+          }
+        ],
+        "pending_mentions": [],
+        "prefix_alignment_failures": [],
+        "canonical_roundtrip": true,
+        "canonical_token_count": 238,
+        "carried_steps": [
+          11,
+          12,
+          13,
+          16,
+          22,
+          23,
+          24,
+          31,
+          33,
+          34,
+          35,
+          38,
+          39,
+          41,
+          45,
+          46,
+          86,
+          98,
+          116,
+          122,
+          123,
+          130,
+          136,
+          137,
+          140,
+          141,
+          144,
+          145,
+          154,
+          212,
+          213,
+          230,
+          231,
+          232
+        ],
+        "block_position_policy": "All final-text tokens, including carried tokens, keep their absolute positions and are scored by the decoder."
+      },
+      "decoded": {
+        "status": "detected",
+        "spans": [
+          {
+            "start_token": 10,
+            "end_token": 13,
+            "text": " Fort Mason Express",
+            "carrier_start": 64,
+            "carrier_end": 128,
+            "score": 132.53040077660626,
+            "nominal_corrected_p": 6.889534584869471e-08,
+            "start_char": 45,
+            "end_char": 64,
+            "literal_text": " Fort Mason Express",
+            "start_utf16": 45,
+            "end_utf16": 64
+          },
+          {
+            "start_token": 121,
+            "end_token": 124,
+            "text": " Paradigm House",
+            "carrier_start": 128,
+            "carrier_end": 192,
+            "score": 114.01826087349869,
+            "nominal_corrected_p": 0.0006702828411887447,
+            "start_char": 657,
+            "end_char": 672,
+            "literal_text": " Paradigm House",
+            "start_utf16": 657,
+            "end_utf16": 672
+          }
+        ],
+        "coverage": "unknown",
+        "hypotheses_tested": 5152,
+        "score_threshold": 107.91773366650041,
+        "ambiguous_blocks": [],
+        "protocol": "coordinate-codeword-green4-exp-v1",
+        "profile": {
+          "protocol": "coordinate-codeword-green4-exp-v1",
+          "scheme": "tilt-race",
+          "key": 1901,
+          "tokenizer": "Qwen/Qwen3-4B-Instruct-2507",
+          "tokenizer_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+          "tokenizer_sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+          "vocabulary_size": 151936,
+          "config": {
+            "block_tokens": 64,
+            "max_span_tokens": 32,
+            "max_response_tokens": 4096,
+            "alpha": 0.01
+          },
+          "strength": 4.0,
+          "preferred_fraction": 0.25,
+          "probability_note": "Coded mixture under the ideal independent random-field model; the finite fixed-key sampler is experimental. This is not a fixed-key probability guarantee.",
+          "experimental": true
+        },
+        "token_count": 238,
+        "text_sha256": "afe6adb348b052358c276283a8184ef8a708699382ca370c11c1a9b14d882ed6",
+        "minimum_tokens": 128
+      },
+      "metrics": {
+        "mentioned_brands": [
+          "Paradigm House",
+          "Fort Mason Express"
+        ],
+        "correctly_recovered_brands": [
+          "Paradigm House",
+          "Fort Mason Express"
+        ],
+        "missing_brands_in_text": [],
+        "complete_records": 2,
+        "incomplete_records": 0,
+        "pending_mentions": 0,
+        "correct_records": 2,
+        "missed_complete_records": [],
+        "extra_detections": [],
+        "both_brands_correct_no_extras": true,
+        "alignment_failures": [],
+        "canonical_roundtrip": true
+      },
+      "raw_artifacts": "artifacts/live-lab/20261014T215258Z-live-83e4fe24de",
+      "manifest_sha256": "bfc2abd566c20002ad078409352e836bd3d2c79789946785c128fdb3b2375469",
+      "post_decode_score_diagnostics": [
+        {
+          "text": " Fort Mason Express",
+          "carrier_start": 64,
+          "expected_payload_score_from_text": 132.53040077660626,
+          "threshold": 107.91773366650041,
+          "carried_tokens_in_block": 5,
+          "score_meets_threshold": true
+        },
+        {
+          "text": " Paradigm House",
+          "carrier_start": 128,
+          "expected_payload_score_from_text": 114.01826087349869,
+          "threshold": 107.91773366650041,
+          "carried_tokens_in_block": 8,
+          "score_meets_threshold": true
+        }
+      ],
+      "tokenization_differences": []
+    },
+    {
+      "watermark": true,
+      "seed": 23,
+      "label": "07-marked-seed-23",
+      "run_id": "20261014T215349Z-live-da6e00e983",
+      "status": "complete",
+      "error": null,
+      "cache_check_failed": false,
+      "stop_reason": "eos",
+      "generated_tokens_including_eos": 253,
+      "wall_seconds_including_validation": 52.23042183299549,
+      "text": "For your trip to Fort Mason in San Francisco, you’ll want to consider the Fort Mason Express shuttle, which runs directly from San Francisco International Airport (SFO) to the area. This service offers step-free boarding, convenient access to the Fort Mason district, and even space for bicycles—perfect if you plan to explore the scenic surroundings or the nearby waterfront. It’s a reliable way to get into the heart of the city without navigating complex transit.\n\nOnce you’re in the area, you can look into staying in the Fort Mason district or nearby neighborhoods like the city’s waterfront or Mission Bay. A great option is Paradigm House, a hotel known for its quiet courtyard and peaceful atmosphere. It’s ideal for a conference stay, offering easy access to both the conference venues and local amenities. You may also want to check availability and confirm if the hotel offers luggage storage, Wi-Fi, or meeting rooms that could support your event needs.\n\nBefore finalizing, make sure to verify the Fort Mason Express schedule, especially on weekdays when conferences are held. Also, confirm room availability, check-in times, and any additional services at Paradigm House. The quiet courtyard at the property is complemented by a relaxed environment, making it a thoughtful choice for professional visitors.",
+      "text_sha256": "c3dda9dd55aa28ba469f23ecde593ee6986ae6dc46b8c72a29dbc7376a8c3b97",
+      "words": 209,
+      "charges": {
+        "cumulative_a": 18.104463194854702,
+        "cumulative_b": 12.317644790429886
+      },
+      "carried_tokens": 41,
+      "encoded": {
+        "mention_policy": "first-eligible-mention-per-brand-v1",
+        "records": [
+          {
+            "start_token": 16,
+            "end_token": 19,
+            "text": " Fort Mason Express",
+            "carrier_start": 64,
+            "carrier_end": 128,
+            "key": 1901,
+            "message_seed": 1759811179655580001,
+            "complete": true,
+            "carried_steps": [
+              80,
+              105,
+              106,
+              108,
+              109,
+              125,
+              126,
+              127
+            ]
+          }
+        ],
+        "pending_mentions": [],
+        "prefix_alignment_failures": [
+          128,
+          192
+        ],
+        "canonical_roundtrip": false,
+        "canonical_token_count": 251,
+        "carried_steps": [
+          16,
+          17,
+          18,
+          20,
+          21,
+          41,
+          42,
+          43,
+          55,
+          56,
+          57,
+          60,
+          80,
+          105,
+          106,
+          108,
+          109,
+          125,
+          126,
+          127,
+          131,
+          134,
+          135,
+          142,
+          149,
+          150,
+          155,
+          173,
+          176,
+          177,
+          187,
+          188,
+          198,
+          199,
+          225,
+          226,
+          227,
+          231,
+          237,
+          238,
+          244
+        ],
+        "block_position_policy": "All final-text tokens, including carried tokens, keep their absolute positions and are scored by the decoder."
+      },
+      "decoded": {
+        "status": "not_detected",
+        "spans": [],
+        "coverage": "unknown",
+        "hypotheses_tested": 5152,
+        "score_threshold": 107.91773366650041,
+        "ambiguous_blocks": [],
+        "protocol": "coordinate-codeword-green4-exp-v1",
+        "profile": {
+          "protocol": "coordinate-codeword-green4-exp-v1",
+          "scheme": "tilt-race",
+          "key": 1901,
+          "tokenizer": "Qwen/Qwen3-4B-Instruct-2507",
+          "tokenizer_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+          "tokenizer_sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+          "vocabulary_size": 151936,
+          "config": {
+            "block_tokens": 64,
+            "max_span_tokens": 32,
+            "max_response_tokens": 4096,
+            "alpha": 0.01
+          },
+          "strength": 4.0,
+          "preferred_fraction": 0.25,
+          "probability_note": "Coded mixture under the ideal independent random-field model; the finite fixed-key sampler is experimental. This is not a fixed-key probability guarantee.",
+          "experimental": true
+        },
+        "token_count": 251,
+        "text_sha256": "c3dda9dd55aa28ba469f23ecde593ee6986ae6dc46b8c72a29dbc7376a8c3b97",
+        "minimum_tokens": 128
+      },
+      "metrics": {
+        "mentioned_brands": [
+          "Paradigm House",
+          "Fort Mason Express"
+        ],
+        "correctly_recovered_brands": [],
+        "missing_brands_in_text": [],
+        "complete_records": 1,
+        "incomplete_records": 0,
+        "pending_mentions": 0,
+        "correct_records": 0,
+        "missed_complete_records": [
+          {
+            "start_token": 16,
+            "end_token": 19,
+            "text": " Fort Mason Express",
+            "carrier_start": 64,
+            "carrier_end": 128,
+            "key": 1901,
+            "message_seed": 1759811179655580001,
+            "complete": true,
+            "carried_steps": [
+              80,
+              105,
+              106,
+              108,
+              109,
+              125,
+              126,
+              127
+            ]
+          }
+        ],
+        "extra_detections": [],
+        "both_brands_correct_no_extras": false,
+        "alignment_failures": [
+          128,
+          192
+        ],
+        "canonical_roundtrip": false
+      },
+      "raw_artifacts": "artifacts/live-lab/20261014T215349Z-live-da6e00e983",
+      "manifest_sha256": "58468d4828545b6a4b83639517736794b4145c43ebbfadcd98c9c3d23ddec9c5",
+      "post_decode_score_diagnostics": [
+        {
+          "text": " Fort Mason Express",
+          "carrier_start": 64,
+          "expected_payload_score_from_text": 105.51975708871016,
+          "threshold": 107.91773366650041,
+          "carried_tokens_in_block": 8,
+          "score_meets_threshold": false
+        }
+      ],
+      "tokenization_differences": [
+        {
+          "original_range": [
+            114,
+            116
+          ],
+          "canonical_range": [
+            114,
+            115
+          ],
+          "original_ids": [
+            3015,
+            6951
+          ],
+          "canonical_ids": [
+            68927
+          ],
+          "original_pieces": [
+            " water",
+            "front"
+          ],
+          "canonical_pieces": [
+            " waterfront"
+          ],
+          "same_visible_fragment": true
+        }
+      ]
+    },
+    {
+      "watermark": true,
+      "seed": 24,
+      "label": "08-marked-seed-24",
+      "run_id": "20261014T215441Z-live-728a8d4a17",
+      "status": "complete",
+      "error": null,
+      "cache_check_failed": false,
+      "stop_reason": "eos",
+      "generated_tokens_including_eos": 234,
+      "wall_seconds_including_validation": 49.253097500004515,
+      "text": "For your conference at Fort Mason in San Francisco, consider using Fort Mason Express to get from SFO to the area. This shuttle provides a convenient and reliable option, offering step-free boarding and direct access to the Fort Mason district. It’s a great choice if you want a comfortable, stress-free transfer without navigating city traffic. Be sure to check the schedule in advance to confirm departure times and arrival times at the Fort Mason stop.\n\nWhen choosing a place to stay, Paradigm House is an excellent option nearby, as it’s located within a short walk of Fort Mason. The hotel features a quiet courtyard, excellent for rest and relaxation after conference sessions. It also offers luggage storage, which is helpful if you need to manage your gear on-site.\n\nBefore making final arrangements, confirm current shuttle operating hours, any restrictions or ride limitations, and the availability of bikes on site. Also, verify that Paradigm House is still offering luggage storage and if the courtyard is accessible during conference days. You might also want to check if any conference discounts or shuttle partnerships are available.  \n\nThis combination of convenient transport and a welcoming stay makes Paradigm House a solid fit for your event.",
+      "text_sha256": "aa7b09f1d0a0a6ae73fb2c53eaaf7b070ea82ff0948d55d040b9d779d5b0a642",
+      "words": 201,
+      "charges": {
+        "cumulative_a": 17.177606320866925,
+        "cumulative_b": 12.514290864721195
+      },
+      "carried_tokens": 37,
+      "encoded": {
+        "mention_policy": "first-eligible-mention-per-brand-v1",
+        "records": [
+          {
+            "start_token": 12,
+            "end_token": 15,
+            "text": " Fort Mason Express",
+            "carrier_start": 64,
+            "carrier_end": 128,
+            "key": 1901,
+            "message_seed": 8140971067467361416,
+            "complete": true,
+            "carried_steps": [
+              72,
+              82,
+              83,
+              84,
+              94,
+              95,
+              103,
+              108,
+              112,
+              115,
+              117,
+              118,
+              119
+            ]
+          },
+          {
+            "start_token": 93,
+            "end_token": 96,
+            "text": " Paradigm House",
+            "carrier_start": 128,
+            "carrier_end": 192,
+            "key": 1901,
+            "message_seed": 3534737515498290756,
+            "complete": true,
+            "carried_steps": [
+              132,
+              133,
+              134,
+              149,
+              179,
+              180,
+              185,
+              189,
+              190
+            ]
+          }
+        ],
+        "pending_mentions": [],
+        "prefix_alignment_failures": [],
+        "canonical_roundtrip": true,
+        "canonical_token_count": 233,
+        "carried_steps": [
+          4,
+          5,
+          13,
+          14,
+          25,
+          27,
+          28,
+          34,
+          35,
+          36,
+          58,
+          72,
+          82,
+          83,
+          84,
+          94,
+          95,
+          103,
+          108,
+          112,
+          115,
+          117,
+          118,
+          119,
+          132,
+          133,
+          134,
+          149,
+          179,
+          180,
+          185,
+          189,
+          190,
+          195,
+          219,
+          224,
+          225
+        ],
+        "block_position_policy": "All final-text tokens, including carried tokens, keep their absolute positions and are scored by the decoder."
+      },
+      "decoded": {
+        "status": "not_detected",
+        "spans": [],
+        "coverage": "unknown",
+        "hypotheses_tested": 5152,
+        "score_threshold": 107.91773366650041,
+        "ambiguous_blocks": [],
+        "protocol": "coordinate-codeword-green4-exp-v1",
+        "profile": {
+          "protocol": "coordinate-codeword-green4-exp-v1",
+          "scheme": "tilt-race",
+          "key": 1901,
+          "tokenizer": "Qwen/Qwen3-4B-Instruct-2507",
+          "tokenizer_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+          "tokenizer_sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+          "vocabulary_size": 151936,
+          "config": {
+            "block_tokens": 64,
+            "max_span_tokens": 32,
+            "max_response_tokens": 4096,
+            "alpha": 0.01
+          },
+          "strength": 4.0,
+          "preferred_fraction": 0.25,
+          "probability_note": "Coded mixture under the ideal independent random-field model; the finite fixed-key sampler is experimental. This is not a fixed-key probability guarantee.",
+          "experimental": true
+        },
+        "token_count": 233,
+        "text_sha256": "aa7b09f1d0a0a6ae73fb2c53eaaf7b070ea82ff0948d55d040b9d779d5b0a642",
+        "minimum_tokens": 128
+      },
+      "metrics": {
+        "mentioned_brands": [
+          "Paradigm House",
+          "Fort Mason Express"
+        ],
+        "correctly_recovered_brands": [],
+        "missing_brands_in_text": [],
+        "complete_records": 2,
+        "incomplete_records": 0,
+        "pending_mentions": 0,
+        "correct_records": 0,
+        "missed_complete_records": [
+          {
+            "start_token": 12,
+            "end_token": 15,
+            "text": " Fort Mason Express",
+            "carrier_start": 64,
+            "carrier_end": 128,
+            "key": 1901,
+            "message_seed": 8140971067467361416,
+            "complete": true,
+            "carried_steps": [
+              72,
+              82,
+              83,
+              84,
+              94,
+              95,
+              103,
+              108,
+              112,
+              115,
+              117,
+              118,
+              119
+            ]
+          },
+          {
+            "start_token": 93,
+            "end_token": 96,
+            "text": " Paradigm House",
+            "carrier_start": 128,
+            "carrier_end": 192,
+            "key": 1901,
+            "message_seed": 3534737515498290756,
+            "complete": true,
+            "carried_steps": [
+              132,
+              133,
+              134,
+              149,
+              179,
+              180,
+              185,
+              189,
+              190
+            ]
+          }
+        ],
+        "extra_detections": [],
+        "both_brands_correct_no_extras": false,
+        "alignment_failures": [],
+        "canonical_roundtrip": true
+      },
+      "raw_artifacts": "artifacts/live-lab/20261014T215441Z-live-728a8d4a17",
+      "manifest_sha256": "08b007c83547268702047ac2fdf1082572325997bfee9ca7811ab066fdce844f",
+      "post_decode_score_diagnostics": [
+        {
+          "text": " Fort Mason Express",
+          "carrier_start": 64,
+          "expected_payload_score_from_text": 102.59463320931732,
+          "threshold": 107.91773366650041,
+          "carried_tokens_in_block": 13,
+          "score_meets_threshold": false
+        },
+        {
+          "text": " Paradigm House",
+          "carrier_start": 128,
+          "expected_payload_score_from_text": 105.65184186213492,
+          "threshold": 107.91773366650041,
+          "carried_tokens_in_block": 9,
+          "score_meets_threshold": false
+        }
+      ],
+      "tokenization_differences": []
+    },
+    {
+      "watermark": true,
+      "seed": 25,
+      "label": "09-marked-seed-25",
+      "run_id": "20261014T215530Z-live-fd0e0f9fa1",
+      "status": "complete",
+      "error": null,
+      "cache_check_failed": false,
+      "stop_reason": "eos",
+      "generated_tokens_including_eos": 278,
+      "wall_seconds_including_validation": 57.83569270899898,
+      "text": "For your trip to Fort Mason in San Francisco, consider using the Fort Mason Express shuttle, which offers a convenient connection from SFO to the Fort Mason district. This service typically runs with step-free boarding and includes space for bicycles, making it ideal for travelers with luggage or gear. It's a reliable, accessible option that gets you right to the conference area without navigating congested city streets.\n\nWhen choosing a place to stay, look for accommodations featuring quiet, central settings within the Fort Mason or nearby neighborhoods. Since the area offers a historic and scenic ambiance, focus on hotels or residential spaces that provide easy access to venues and public transportation. Be sure to check for proximity to the Fort Mason Express stop or a nearby transit hub.\n\nParadigm House is a great option to consider—though availability and pricing may vary, it’s located in the Fort Mason district. Before booking, confirm the shuttle schedule, especially since it may not run on all days or during off-peak hours, and inquire if bikes can be stored or brought directly to your accommodation.\n\nBefore finalizing your plans, verify:  \n- The schedule of the Fort Mason Express from SFO  \n- Pickup times and baggage policies  \n- Paradigm House’s real-time availability and distance from the conference venue  \n- Whether luggage storage is available and if bikes are permitted  \n\nThis will ensure a seamless and stress-free arrival and stay.",
+      "text_sha256": "d64dd13bc52622ec967e902da6a571e069f0ce86345f2b1bebe4073bbfc00e51",
+      "words": 233,
+      "charges": {
+        "cumulative_a": 16.987005486403813,
+        "cumulative_b": 17.943320358623254
+      },
+      "carried_tokens": 51,
+      "encoded": {
+        "mention_policy": "first-eligible-mention-per-brand-v1",
+        "records": [
+          {
+            "start_token": 13,
+            "end_token": 16,
+            "text": " Fort Mason Express",
+            "carrier_start": 64,
+            "carrier_end": 128,
+            "key": 1901,
+            "message_seed": 5385887522136896357,
+            "complete": true,
+            "carried_steps": [
+              65,
+              67,
+              86,
+              87,
+              95,
+              96,
+              98,
+              110,
+              112,
+              120,
+              121
+            ]
+          },
+          {
+            "start_token": 145,
+            "end_token": 149,
+            "text": "Paradigm House",
+            "carrier_start": 192,
+            "carrier_end": 256,
+            "key": 1901,
+            "message_seed": 2606138220882229504,
+            "complete": true,
+            "carried_steps": [
+              219,
+              228,
+              229,
+              238,
+              240,
+              241,
+              253,
+              254,
+              255
+            ]
+          }
+        ],
+        "pending_mentions": [],
+        "prefix_alignment_failures": [],
+        "canonical_roundtrip": true,
+        "canonical_token_count": 277,
+        "carried_steps": [
+          13,
+          14,
+          15,
+          18,
+          23,
+          29,
+          30,
+          31,
+          35,
+          37,
+          38,
+          39,
+          42,
+          43,
+          44,
+          49,
+          55,
+          62,
+          65,
+          67,
+          86,
+          87,
+          95,
+          96,
+          98,
+          110,
+          112,
+          120,
+          121,
+          128,
+          129,
+          133,
+          136,
+          137,
+          146,
+          147,
+          148,
+          150,
+          166,
+          167,
+          168,
+          219,
+          228,
+          229,
+          238,
+          240,
+          241,
+          253,
+          254,
+          255,
+          257
+        ],
+        "block_position_policy": "All final-text tokens, including carried tokens, keep their absolute positions and are scored by the decoder."
+      },
+      "decoded": {
+        "status": "detected",
+        "spans": [
+          {
+            "start_token": 145,
+            "end_token": 149,
+            "text": "Paradigm House",
+            "carrier_start": 192,
+            "carrier_end": 256,
+            "score": 117.42315730044089,
+            "nominal_corrected_p": 0.0002883344197214309,
+            "start_char": 804,
+            "end_char": 818,
+            "literal_text": "Paradigm House",
+            "start_utf16": 804,
+            "end_utf16": 818
+          }
+        ],
+        "coverage": "unknown",
+        "hypotheses_tested": 10800,
+        "score_threshold": 109.62962902442493,
+        "ambiguous_blocks": [],
+        "protocol": "coordinate-codeword-green4-exp-v1",
+        "profile": {
+          "protocol": "coordinate-codeword-green4-exp-v1",
+          "scheme": "tilt-race",
+          "key": 1901,
+          "tokenizer": "Qwen/Qwen3-4B-Instruct-2507",
+          "tokenizer_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+          "tokenizer_sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+          "vocabulary_size": 151936,
+          "config": {
+            "block_tokens": 64,
+            "max_span_tokens": 32,
+            "max_response_tokens": 4096,
+            "alpha": 0.01
+          },
+          "strength": 4.0,
+          "preferred_fraction": 0.25,
+          "probability_note": "Coded mixture under the ideal independent random-field model; the finite fixed-key sampler is experimental. This is not a fixed-key probability guarantee.",
+          "experimental": true
+        },
+        "token_count": 277,
+        "text_sha256": "d64dd13bc52622ec967e902da6a571e069f0ce86345f2b1bebe4073bbfc00e51",
+        "minimum_tokens": 128
+      },
+      "metrics": {
+        "mentioned_brands": [
+          "Paradigm House",
+          "Fort Mason Express"
+        ],
+        "correctly_recovered_brands": [
+          "Paradigm House"
+        ],
+        "missing_brands_in_text": [],
+        "complete_records": 2,
+        "incomplete_records": 0,
+        "pending_mentions": 0,
+        "correct_records": 1,
+        "missed_complete_records": [
+          {
+            "start_token": 13,
+            "end_token": 16,
+            "text": " Fort Mason Express",
+            "carrier_start": 64,
+            "carrier_end": 128,
+            "key": 1901,
+            "message_seed": 5385887522136896357,
+            "complete": true,
+            "carried_steps": [
+              65,
+              67,
+              86,
+              87,
+              95,
+              96,
+              98,
+              110,
+              112,
+              120,
+              121
+            ]
+          }
+        ],
+        "extra_detections": [],
+        "both_brands_correct_no_extras": false,
+        "alignment_failures": [],
+        "canonical_roundtrip": true
+      },
+      "raw_artifacts": "artifacts/live-lab/20261014T215530Z-live-fd0e0f9fa1",
+      "manifest_sha256": "dc45757f72a62da336fcac58d4df18e5896b8c970153770562b88d5e912dd47b",
+      "post_decode_score_diagnostics": [
+        {
+          "text": " Fort Mason Express",
+          "carrier_start": 64,
+          "expected_payload_score_from_text": 107.59994114062876,
+          "threshold": 109.62962902442493,
+          "carried_tokens_in_block": 11,
+          "score_meets_threshold": false
+        },
+        {
+          "text": "Paradigm House",
+          "carrier_start": 192,
+          "expected_payload_score_from_text": 117.42315730044089,
+          "threshold": 109.62962902442493,
+          "carried_tokens_in_block": 9,
+          "score_meets_threshold": true
+        }
+      ],
+      "tokenization_differences": []
+    },
+    {
+      "watermark": true,
+      "seed": 26,
+      "label": "10-marked-seed-26",
+      "run_id": "20261014T215628Z-live-da3c462f26",
+      "status": "complete",
+      "error": null,
+      "cache_check_failed": false,
+      "stop_reason": "eos",
+      "generated_tokens_including_eos": 263,
+      "wall_seconds_including_validation": 55.27996683300444,
+      "text": "For your trip to Fort Mason in San Francisco, a convenient option for getting from SFO is the Fort Mason Express, which offers direct service between the airport and the district. This route features step-free boarding, making it accessible for travelers with mobility needs, and runs with reliable frequency. The shuttle also includes space for bicycles, useful if you plan to explore on two wheels.  \n\nWhen planning your arrival, it’s worth checking current schedules and departure times, as these can vary slightly during weekdays versus weekends. Since Fort Mason Express is one of the few options providing direct shuttles from SFO, it’s a time-efficient route, which is especially helpful during a conference.  \n\nFor your accommodation, consider staying in or near the Fort Mason district, such as in the nearby Paradigm House. While the hotel may not offer the most modern amenities, it's known for its convenient location and a quiet, comfortable courtyard. Be sure to verify room availability and confirm if they accept walk-in reservations.  \n\nParadigm House also offers luggage storage, which is helpful if you have to arrive early or depart late. Always confirm travel times, rates, and check-in policies in advance, especially during peak conference months. Double-check if the hotel has bikes or if the Fort Mason Express offers complimentary shuttle access for guests.",
+      "text_sha256": "0490106a4884a12557010cf67f52bd5a8f6a74c013af24d5159ef7bdd772fcd2",
+      "words": 216,
+      "charges": {
+        "cumulative_a": 13.004432901921193,
+        "cumulative_b": 21.560428185185124
+      },
+      "carried_tokens": 46,
+      "encoded": {
+        "mention_policy": "first-eligible-mention-per-brand-v1",
+        "records": [
+          {
+            "start_token": 20,
+            "end_token": 23,
+            "text": " Fort Mason Express",
+            "carrier_start": 64,
+            "carrier_end": 128,
+            "key": 1901,
+            "message_seed": 5592205666208913547,
+            "complete": true,
+            "carried_steps": [
+              64,
+              78,
+              80,
+              86,
+              89,
+              94,
+              107,
+              108,
+              114,
+              115
+            ]
+          },
+          {
+            "start_token": 155,
+            "end_token": 158,
+            "text": " Paradigm House",
+            "carrier_start": 192,
+            "carrier_end": 256,
+            "key": 1901,
+            "message_seed": 15262272067405081518,
+            "complete": true,
+            "carried_steps": [
+              201,
+              202,
+              203,
+              207,
+              218,
+              253,
+              254
+            ]
+          }
+        ],
+        "pending_mentions": [],
+        "prefix_alignment_failures": [],
+        "canonical_roundtrip": true,
+        "canonical_token_count": 262,
+        "carried_steps": [
+          15,
+          16,
+          17,
+          20,
+          21,
+          22,
+          34,
+          38,
+          39,
+          40,
+          42,
+          43,
+          44,
+          47,
+          62,
+          63,
+          64,
+          78,
+          80,
+          86,
+          89,
+          94,
+          107,
+          108,
+          114,
+          115,
+          139,
+          140,
+          144,
+          145,
+          146,
+          151,
+          156,
+          157,
+          158,
+          173,
+          174,
+          185,
+          186,
+          201,
+          202,
+          203,
+          207,
+          218,
+          253,
+          254
+        ],
+        "block_position_policy": "All final-text tokens, including carried tokens, keep their absolute positions and are scored by the decoder."
+      },
+      "decoded": {
+        "status": "detected",
+        "spans": [
+          {
+            "start_token": 20,
+            "end_token": 23,
+            "text": " Fort Mason Express",
+            "carrier_start": 64,
+            "carrier_end": 128,
+            "score": 126.68036372044948,
+            "nominal_corrected_p": 3.0385730508489056e-06,
+            "start_char": 93,
+            "end_char": 112,
+            "literal_text": " Fort Mason Express",
+            "start_utf16": 93,
+            "end_utf16": 112
+          },
+          {
+            "start_token": 155,
+            "end_token": 158,
+            "text": " Paradigm House",
+            "carrier_start": 192,
+            "carrier_end": 256,
+            "score": 112.45046847256744,
+            "nominal_corrected_p": 0.0028623720387089776,
+            "start_char": 817,
+            "end_char": 832,
+            "literal_text": " Paradigm House",
+            "start_utf16": 817,
+            "end_utf16": 832
+          }
+        ],
+        "coverage": "unknown",
+        "hypotheses_tested": 10800,
+        "score_threshold": 109.62962902442493,
+        "ambiguous_blocks": [],
+        "protocol": "coordinate-codeword-green4-exp-v1",
+        "profile": {
+          "protocol": "coordinate-codeword-green4-exp-v1",
+          "scheme": "tilt-race",
+          "key": 1901,
+          "tokenizer": "Qwen/Qwen3-4B-Instruct-2507",
+          "tokenizer_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+          "tokenizer_sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+          "vocabulary_size": 151936,
+          "config": {
+            "block_tokens": 64,
+            "max_span_tokens": 32,
+            "max_response_tokens": 4096,
+            "alpha": 0.01
+          },
+          "strength": 4.0,
+          "preferred_fraction": 0.25,
+          "probability_note": "Coded mixture under the ideal independent random-field model; the finite fixed-key sampler is experimental. This is not a fixed-key probability guarantee.",
+          "experimental": true
+        },
+        "token_count": 262,
+        "text_sha256": "0490106a4884a12557010cf67f52bd5a8f6a74c013af24d5159ef7bdd772fcd2",
+        "minimum_tokens": 128
+      },
+      "metrics": {
+        "mentioned_brands": [
+          "Paradigm House",
+          "Fort Mason Express"
+        ],
+        "correctly_recovered_brands": [
+          "Paradigm House",
+          "Fort Mason Express"
+        ],
+        "missing_brands_in_text": [],
+        "complete_records": 2,
+        "incomplete_records": 0,
+        "pending_mentions": 0,
+        "correct_records": 2,
+        "missed_complete_records": [],
+        "extra_detections": [],
+        "both_brands_correct_no_extras": true,
+        "alignment_failures": [],
+        "canonical_roundtrip": true
+      },
+      "raw_artifacts": "artifacts/live-lab/20261014T215628Z-live-da3c462f26",
+      "manifest_sha256": "d896032446b47454a52b4e5eaa35d234e87317f03aae82e304d1c26f363097d7",
+      "post_decode_score_diagnostics": [
+        {
+          "text": " Fort Mason Express",
+          "carrier_start": 64,
+          "expected_payload_score_from_text": 126.68036372044948,
+          "threshold": 109.62962902442493,
+          "carried_tokens_in_block": 10,
+          "score_meets_threshold": true
+        },
+        {
+          "text": " Paradigm House",
+          "carrier_start": 192,
+          "expected_payload_score_from_text": 112.45046847256744,
+          "threshold": 109.62962902442493,
+          "carried_tokens_in_block": 7,
+          "score_meets_threshold": true
+        }
+      ],
+      "tokenization_differences": []
+    },
+    {
+      "watermark": true,
+      "seed": 27,
+      "label": "11-marked-seed-27",
+      "run_id": "20261014T215723Z-live-484fda72c2",
+      "status": "error",
+      "error": "AssertionError: Tensor-likes are not close!\n\nMismatched elements: 1 / 151936 (0.0%)\nGreatest absolute difference: 0.00032192468643188477 at index (65972,) (up to 0.0003 allowed)\nGreatest relative difference: 0.009905656799674034 at index (65972,) (up to 0.0001 allowed)",
+      "cache_check_failed": true,
+      "stop_reason": "eos",
+      "generated_tokens_including_eos": 266,
+      "wall_seconds_including_validation": 54.84964362500614,
+      "text": "For your trip to Fort Mason in San Francisco, consider using a reliable shuttle service or public transit to get from SFO to the area. Fort Mason Express offers convenient shuttles directly from SFO International Airport to the Fort Mason district. These shuttles feature step-free boarding, wheelchair access, and space for bicycles. It’s a cost-effective and stress-free option to reach your conference destination, especially if you’re arriving from the airport.\n\nBefore finalizing your travel plans, check the current schedule and departure times on the Fort Mason Express website, as schedules may change seasonally or due to events. Confirm if your conference dates align with shuttle availability, as peak times may require advance booking.\n\nWhen choosing a place to stay, consider proximity to Fort Mason for convenience. A nearby hotel or Airbnb could offer easy access to the event venue. Paradigm House and the Fort Mason district itself may have ideal accommodations with quiet, urban settings. Check if Paradigm House has room availability, amenities, and transportation options for guests. You might also note it features a quiet courtyard and provides luggage storage.\n\nAsk yourself: What is your budget? Do you need luggage storage or bike storage? How much time do you have to spend outside the conference? Once you have answers, you’ll be better equipped to book your stay and travel arrangements.",
+      "text_sha256": "176de5c70dd92a8b7c34eeed57ed3046046c84373d33aa2456f4dd34a7a8935b",
+      "words": 221,
+      "charges": {
+        "cumulative_a": 13.762383664045876,
+        "cumulative_b": 15.593496218360608
+      },
+      "carried_tokens": 39,
+      "encoded": {
+        "mention_policy": "first-eligible-mention-per-brand-v1",
+        "records": [
+          {
+            "start_token": 28,
+            "end_token": 31,
+            "text": " Fort Mason Express",
+            "carrier_start": 64,
+            "carrier_end": 128,
+            "key": 1901,
+            "message_seed": 1391871923490709858,
+            "complete": true,
+            "carried_steps": [
+              69,
+              72,
+              77,
+              91,
+              102,
+              120
+            ]
+          },
+          {
+            "start_token": 168,
+            "end_token": 171,
+            "text": " Paradigm House",
+            "carrier_start": 192,
+            "carrier_end": 256,
+            "key": 1901,
+            "message_seed": 1005664565172573311,
+            "complete": true,
+            "carried_steps": [
+              210,
+              212,
+              213,
+              215,
+              216,
+              230
+            ]
+          }
+        ],
+        "pending_mentions": [],
+        "prefix_alignment_failures": [],
+        "canonical_roundtrip": true,
+        "canonical_token_count": 265,
+        "carried_steps": [
+          15,
+          18,
+          29,
+          30,
+          31,
+          34,
+          35,
+          39,
+          44,
+          45,
+          46,
+          49,
+          50,
+          51,
+          53,
+          54,
+          55,
+          62,
+          63,
+          69,
+          72,
+          77,
+          91,
+          102,
+          120,
+          148,
+          149,
+          150,
+          156,
+          169,
+          170,
+          190,
+          191,
+          210,
+          212,
+          213,
+          215,
+          216,
+          230
+        ],
+        "block_position_policy": "All final-text tokens, including carried tokens, keep their absolute positions and are scored by the decoder."
+      },
+      "decoded": {
+        "status": "detected",
+        "spans": [
+          {
+            "start_token": 168,
+            "end_token": 171,
+            "text": " Paradigm House",
+            "carrier_start": 192,
+            "carrier_end": 256,
+            "score": 111.03027250960837,
+            "nominal_corrected_p": 0.005399142273480373,
+            "start_char": 898,
+            "end_char": 913,
+            "literal_text": " Paradigm House",
+            "start_utf16": 898,
+            "end_utf16": 913
+          }
+        ],
+        "coverage": "unknown",
+        "hypotheses_tested": 10800,
+        "score_threshold": 109.62962902442493,
+        "ambiguous_blocks": [],
+        "protocol": "coordinate-codeword-green4-exp-v1",
+        "profile": {
+          "protocol": "coordinate-codeword-green4-exp-v1",
+          "scheme": "tilt-race",
+          "key": 1901,
+          "tokenizer": "Qwen/Qwen3-4B-Instruct-2507",
+          "tokenizer_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+          "tokenizer_sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+          "vocabulary_size": 151936,
+          "config": {
+            "block_tokens": 64,
+            "max_span_tokens": 32,
+            "max_response_tokens": 4096,
+            "alpha": 0.01
+          },
+          "strength": 4.0,
+          "preferred_fraction": 0.25,
+          "probability_note": "Coded mixture under the ideal independent random-field model; the finite fixed-key sampler is experimental. This is not a fixed-key probability guarantee.",
+          "experimental": true
+        },
+        "token_count": 265,
+        "text_sha256": "176de5c70dd92a8b7c34eeed57ed3046046c84373d33aa2456f4dd34a7a8935b",
+        "minimum_tokens": 128
+      },
+      "metrics": {
+        "mentioned_brands": [
+          "Paradigm House",
+          "Fort Mason Express"
+        ],
+        "correctly_recovered_brands": [
+          "Paradigm House"
+        ],
+        "missing_brands_in_text": [],
+        "complete_records": 2,
+        "incomplete_records": 0,
+        "pending_mentions": 0,
+        "correct_records": 1,
+        "missed_complete_records": [
+          {
+            "start_token": 28,
+            "end_token": 31,
+            "text": " Fort Mason Express",
+            "carrier_start": 64,
+            "carrier_end": 128,
+            "key": 1901,
+            "message_seed": 1391871923490709858,
+            "complete": true,
+            "carried_steps": [
+              69,
+              72,
+              77,
+              91,
+              102,
+              120
+            ]
+          }
+        ],
+        "extra_detections": [],
+        "both_brands_correct_no_extras": false,
+        "alignment_failures": [],
+        "canonical_roundtrip": true
+      },
+      "raw_artifacts": "artifacts/live-lab/20261014T215723Z-live-484fda72c2",
+      "manifest_sha256": "2e1793caf00c2927aeb4bfcc075c9a5bb1d33e3fe24df22dde1b470490b7658e",
+      "post_decode_score_diagnostics": [
+        {
+          "text": " Fort Mason Express",
+          "carrier_start": 64,
+          "expected_payload_score_from_text": 95.70624345077681,
+          "threshold": 109.62962902442493,
+          "carried_tokens_in_block": 6,
+          "score_meets_threshold": false
+        },
+        {
+          "text": " Paradigm House",
+          "carrier_start": 192,
+          "expected_payload_score_from_text": 111.03027250960837,
+          "threshold": 109.62962902442493,
+          "carried_tokens_in_block": 6,
+          "score_meets_threshold": true
+        }
+      ],
+      "tokenization_differences": []
+    },
+    {
+      "watermark": true,
+      "seed": 28,
+      "label": "12-marked-seed-28",
+      "run_id": "20261014T215818Z-live-5886db95c2",
+      "status": "complete",
+      "error": null,
+      "cache_check_failed": false,
+      "stop_reason": "eos",
+      "generated_tokens_including_eos": 239,
+      "wall_seconds_including_validation": 50.22312033399794,
+      "text": "For your trip to Fort Mason in San Francisco, Fort Mason Express offers a convenient and accessible shuttle service directly from SFO to the Fort Mason district. This shuttle provides a step-free boarding experience, making it ideal for conference attendees with limited mobility, and arrives at the Fort Mason area with ample space for bicycles and luggage. It’s a great option for those seeking a reliable and comfortable connection without needing to transfer.\n\nWhen selecting a place to stay, consider Paradigm House, a mid-rise hotel in the same city area. Located in the North Beach district, it offers a quiet, urban courtyard that's ideal for conference attendees looking to relax or take a moment in nature. The hotel is nearby and convenient, especially if your conference is in the Fort Mason district or if you want to walk between venues.\n\nBefore booking, verify the shuttle schedule and frequency for your travel dates to ensure alignment with your arrival and departure. Also, confirm that Paradigm House has availability on your dates and check if they offer luggage storage or other amenities such as free Wi-Fi or business centers. Remember to review Fort Mason Express’s service details and Paradigm House’s location map to make sure the logistics match your needs.",
+      "text_sha256": "fd6d19326ea1f9f116f3ddfd451aa842fa9c39d1287435eab81e7c479c31828b",
+      "words": 208,
+      "charges": {
+        "cumulative_a": 10.507518079008436,
+        "cumulative_b": 12.96245509415775
+      },
+      "carried_tokens": 41,
+      "encoded": {
+        "mention_policy": "first-eligible-mention-per-brand-v1",
+        "records": [
+          {
+            "start_token": 10,
+            "end_token": 13,
+            "text": " Fort Mason Express",
+            "carrier_start": 64,
+            "carrier_end": 128,
+            "key": 1901,
+            "message_seed": 14622062100481744622,
+            "complete": true,
+            "carried_steps": [
+              84,
+              85,
+              86,
+              91,
+              92,
+              93,
+              99,
+              105,
+              106,
+              108
+            ]
+          },
+          {
+            "start_token": 90,
+            "end_token": 93,
+            "text": " Paradigm House",
+            "carrier_start": 128,
+            "carrier_end": 192,
+            "key": 1901,
+            "message_seed": 12972660194891387172,
+            "complete": true,
+            "carried_steps": [
+              134,
+              160,
+              174,
+              186,
+              187,
+              188
+            ]
+          }
+        ],
+        "pending_mentions": [],
+        "prefix_alignment_failures": [],
+        "canonical_roundtrip": true,
+        "canonical_token_count": 238,
+        "carried_steps": [
+          1,
+          11,
+          12,
+          13,
+          18,
+          21,
+          25,
+          26,
+          27,
+          35,
+          36,
+          37,
+          39,
+          40,
+          44,
+          49,
+          59,
+          60,
+          84,
+          85,
+          86,
+          91,
+          92,
+          93,
+          99,
+          105,
+          106,
+          108,
+          134,
+          160,
+          174,
+          186,
+          187,
+          188,
+          198,
+          200,
+          205,
+          217,
+          218,
+          224,
+          225
+        ],
+        "block_position_policy": "All final-text tokens, including carried tokens, keep their absolute positions and are scored by the decoder."
+      },
+      "decoded": {
+        "status": "detected",
+        "spans": [
+          {
+            "start_token": 90,
+            "end_token": 93,
+            "text": " Paradigm House",
+            "carrier_start": 128,
+            "carrier_end": 192,
+            "score": 121.54881397114644,
+            "nominal_corrected_p": 1.887420923775128e-05,
+            "start_char": 505,
+            "end_char": 520,
+            "literal_text": " Paradigm House",
+            "start_utf16": 505,
+            "end_utf16": 520
+          }
+        ],
+        "coverage": "unknown",
+        "hypotheses_tested": 5152,
+        "score_threshold": 107.91773366650041,
+        "ambiguous_blocks": [],
+        "protocol": "coordinate-codeword-green4-exp-v1",
+        "profile": {
+          "protocol": "coordinate-codeword-green4-exp-v1",
+          "scheme": "tilt-race",
+          "key": 1901,
+          "tokenizer": "Qwen/Qwen3-4B-Instruct-2507",
+          "tokenizer_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+          "tokenizer_sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+          "vocabulary_size": 151936,
+          "config": {
+            "block_tokens": 64,
+            "max_span_tokens": 32,
+            "max_response_tokens": 4096,
+            "alpha": 0.01
+          },
+          "strength": 4.0,
+          "preferred_fraction": 0.25,
+          "probability_note": "Coded mixture under the ideal independent random-field model; the finite fixed-key sampler is experimental. This is not a fixed-key probability guarantee.",
+          "experimental": true
+        },
+        "token_count": 238,
+        "text_sha256": "fd6d19326ea1f9f116f3ddfd451aa842fa9c39d1287435eab81e7c479c31828b",
+        "minimum_tokens": 128
+      },
+      "metrics": {
+        "mentioned_brands": [
+          "Paradigm House",
+          "Fort Mason Express"
+        ],
+        "correctly_recovered_brands": [
+          "Paradigm House"
+        ],
+        "missing_brands_in_text": [],
+        "complete_records": 2,
+        "incomplete_records": 0,
+        "pending_mentions": 0,
+        "correct_records": 1,
+        "missed_complete_records": [
+          {
+            "start_token": 10,
+            "end_token": 13,
+            "text": " Fort Mason Express",
+            "carrier_start": 64,
+            "carrier_end": 128,
+            "key": 1901,
+            "message_seed": 14622062100481744622,
+            "complete": true,
+            "carried_steps": [
+              84,
+              85,
+              86,
+              91,
+              92,
+              93,
+              99,
+              105,
+              106,
+              108
+            ]
+          }
+        ],
+        "extra_detections": [],
+        "both_brands_correct_no_extras": false,
+        "alignment_failures": [],
+        "canonical_roundtrip": true
+      },
+      "raw_artifacts": "artifacts/live-lab/20261014T215818Z-live-5886db95c2",
+      "manifest_sha256": "04bdd20b183636ae3f9b7e14bc393d7996df9185d92e2d45908050875f6d7936",
+      "post_decode_score_diagnostics": [
+        {
+          "text": " Fort Mason Express",
+          "carrier_start": 64,
+          "expected_payload_score_from_text": 107.01695252479165,
+          "threshold": 107.91773366650041,
+          "carried_tokens_in_block": 10,
+          "score_meets_threshold": false
+        },
+        {
+          "text": " Paradigm House",
+          "carrier_start": 128,
+          "expected_payload_score_from_text": 121.54881397114644,
+          "threshold": 107.91773366650041,
+          "carried_tokens_in_block": 6,
+          "score_meets_threshold": true
+        }
+      ],
+      "tokenization_differences": []
+    }
+  ],
+  "model_environment": {
+    "model_id": "Qwen/Qwen3-4B-Instruct-2507",
+    "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "tokenizer": "Qwen/Qwen3-4B-Instruct-2507",
+    "tokenizer_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "device": "mps",
+    "dtype": "float32",
+    "hardware": "arm64",
+    "platform": "macOS-15.7.9-arm64-arm-64bit",
+    "python": "3.11.15",
+    "dependencies": {
+      "token-auction-lab": "0.1.0",
+      "torch": "2.14.1",
+      "packaging": "26.3",
+      "requests": "2.34.2",
+      "networkx": "3.6.1",
+      "numpy": "2.4.6",
+      "sympy": "1.14.0",
+      "huggingface_hub": "0.36.2",
+      "hf-xet": "1.7.0",
+      "safetensors": "0.8.0",
+      "tqdm": "4.70.1",
+      "setuptools": "84.0.0",
+      "urllib3": "2.8.0",
+      "ruff": "0.17.0",
+      "mpmath": "1.3.0",
+      "PyYAML": "6.0.3",
+      "fsspec": "2026.9.0",
+      "filelock": "4.1.1",
+      "transformers": "4.57.6",
+      "certifi": "2026.7.22",
+      "Jinja2": "3.1.6",
+      "regex": "2026.9.29",
+      "typing_extensions": "4.16.0",
+      "MarkupSafe": "3.0.4",
+      "tokenizers": "0.22.2",
+      "charset-normalizer": "3.5.2",
+      "idna": "3.20"
+    },
+    "source_sha256": {
+      "token_auction_lab/__init__.py": "6ffa3ae784ab130162327ada18145c3b1f3cc9691d6968eef4804bb5e16845c8",
+      "token_auction_lab/cli.py": "8f8e2311837d7ebba6dbb554a33ffa82fe6b50019bc20708ef72c1e31d3b78fc",
+      "token_auction_lab/continuation.py": "e04b693d7142350825e04f581931ce599f1fbc73402e392c8520121e55174823",
+      "token_auction_lab/decoder.py": "262c3cc41c6ba71f3d0439b5bad3313097f8659483e467e43c13f0bc0bce40aa",
+      "token_auction_lab/limits.py": "a888f8beb14c165aaaa6a1d3a392e2588988055c208baa65dd7ece49977cf885",
+      "token_auction_lab/live.py": "1732de5d17c427952ba9a99489f6ef2275100fa467ad5872cd6fe2fb69a793c2",
+      "token_auction_lab/prompts.py": "d83d93b9ccde3ef75a5979a24187c63277d2a0c1e32e8e0adf56cbb23557d9ef",
+      "token_auction_lab/runner.py": "ce9621487791f315ccd3432205b0b823bcad56ba935cb3479d4b63151caf9b57",
+      "token_auction_lab/walkthrough.py": "cce3f0494940cb3f12049e0d295dad4141320b81e6a763ca5ba510ecfb6f4595",
+      "token_auction_lab/watermark.py": "83fb463f2b479c00331bbac3d83d9c9418c1960d4c5ce3c0babc5de759cb4d64",
+      "auction.py": "623fb22c24e3320729dab5387959f9413975c0033961c9c62dd10789ad2357e5"
+    },
+    "attention_implementation": "sdpa"
+  },
+  "summary": {
+    "watermarked_runs": 8,
+    "control_runs": 4,
+    "both_brands_recovered_no_extras": 3,
+    "one_brand_recovered": 3,
+    "neither_brand_recovered": 2,
+    "correct_records": 9,
+    "complete_records": 15,
+    "intended_brand_opportunities": 16,
+    "controls_with_false_detections": 0,
+    "marked_runs_with_extra_detections": 0,
+    "marked_runs_with_tokenization_mismatch": 1,
+    "marked_runs_with_incomplete_or_pending_records": 0,
+    "generation_or_validation_errors": 1,
+    "eos_finished_runs": 12
+  },
+  "post_decode_analysis_note": "Expected-payload scores and tokenization diffs use the recorded audit only for failure diagnosis after text-only decoding. They do not change detection results.",
+  "test_plan_sha256": "c18fb9ead9eb9167abfe5590cffbac73e68a4e2f9f727ff49a6ff710d6aab27e",
+  "evaluation_script_sha256": "36beac5cb908a4aed2c55ceb5af45f6e8511c059585ef5784e0d560e685ee0a9",
+  "audited_app_commit": "a87e8ed",
+  "text_review_scope": "Not scored: the user requested focus on watermark creation and decoding."
+}
