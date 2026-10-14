@@ -18,6 +18,7 @@ import uuid
 
 from token_auction_lab.prompts import ADVERTISER_PROMPT_POLICY
 from token_auction_lab.limits import MAX_OUTPUT_TOKENS
+from token_auction_lab.continuation import validate_continuation
 
 MODEL = "Qwen/Qwen3-4B-Instruct-2507"
 REVISION = "cdbee75f17c01a7cc42f958dc650907174af0554"
@@ -65,6 +66,8 @@ class LiveRequest:
     seed: int
     temperature: float
     max_tokens: int
+    continuation_tokens: int = 0
+    continuation_threshold: float = .98
 
     @classmethod
     def parse(cls, value):
@@ -73,6 +76,9 @@ class LiveRequest:
         ads = value.get("advertisers")
         if not isinstance(ads, list) or len(ads) != 2 or any(not isinstance(ad, dict) for ad in ads):
             raise ValueError("Exactly two advertisers are required.")
+        carry_tokens = value.get("continuation_tokens", 0)
+        carry_threshold = value.get("continuation_threshold", .98)
+        validate_continuation(carry_tokens, carry_threshold)
         return cls(
             text_field(value.get("prompt"), "Shared prompt", 6000),
             text_field(value.get("instructions"), "Shared instructions", 8000, empty=True),
@@ -85,6 +91,7 @@ class LiveRequest:
             numeric(value.get("seed"), "Seed", 0, 2**32 - 1, integer=True),
             numeric(value.get("temperature"), "Temperature", .05, 2),
             numeric(value.get("max_tokens"), "Safety token limit", 1, MAX_OUTPUT_TOKENS, integer=True),
+            carry_tokens, carry_threshold,
         )
 
     @property
@@ -151,7 +158,7 @@ class InferenceEngine:
             "sampling_filters": None, "scenario": "editable-live-inputs",
             "timing_note": "Ad generation includes prefill, both bidder forwards and the no-ad observer forward, "
                 "sampling, full-vector retention for the active inspector, trace I/O, and "
-                "synchronization. The independent no-ad answer has its own timing. "
+                "synchronization. "
                 "Cache validation and initial model load are separate.",
         }
 
@@ -184,6 +191,8 @@ class InferenceEngine:
             request.advertisers[0].bid, request.advertisers[1].bid,
             seed=request.seed, temperature=request.temperature, max_tokens=request.max_tokens,
             baseline=request.baseline,
+            continuation_tokens=0 if request.baseline else request.continuation_tokens,
+            continuation_threshold=request.continuation_threshold,
         )
         metadata["no_ad_prompt_policy"] = "Only the user message; excludes shared ad instructions, briefs, objectives, and bids."
         if request.baseline:
@@ -194,22 +203,6 @@ class InferenceEngine:
             on_event=on_event, on_distributions=on_distributions, no_ad_prompt=no_ad_prompt,
             should_stop=should_stop)
 
-        if should_stop and should_stop():
-            result["no_ad_status"] = "skipped_user_stop"
-            (output / "result.json").write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n")
-            return result
-
-        def emit_no_ad(event):
-            on_event({"type": "no_ad_event", "event": event})
-
-        # An independent RNG and its own generated prefix. This does not change the auction tape.
-        no_ad_result = run_round(self.model, self.tokenizer, [no_ad_prompt],
-            RoundConfig(0, 0, seed=request.seed, temperature=request.temperature,
-                max_tokens=request.max_tokens, baseline=True),
-            output / "no-ad", {**metadata, "comparison_parent": output.name},
-            on_event=emit_no_ad, should_stop=should_stop)
-        result["no_ad_result"] = no_ad_result
-        (output / "result.json").write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n")
         return result
 
 
@@ -336,6 +329,7 @@ class LiveService:
             event = deepcopy(self.current["events"][step])
             vectors = self.current["vectors"][step]
         baseline = event["branch"] == "baseline"
+        carried = event.get("selection_rule") == "winner_continuation"
         if baseline:
             q = vectors[0]
             outcome = {"token_id": event["token_id"], "branch": "baseline",
@@ -345,7 +339,13 @@ class LiveService:
             b = event["bid_b"] if b is None else numeric(b, "Counterfactual B bid", 0, 1000)
             auction = TwoBidderAuction(*vectors[:2])
             q = auction.mixture(a, b)
-            outcome = asdict(auction.resolve(a, b, RandomTape(**event["tape"])))
+            if carried:
+                if a != event["bid_a"] or b != event["bid_b"]:
+                    raise ValueError("A carried token depends on a previous win. Inspect that win or refresh inference to change bids.")
+                outcome = {"token_id": event["token_id"], "branch": event["branch"],
+                    "payment_a": 0.0, "payment_b": 0.0}
+            else:
+                outcome = asdict(auction.resolve(a, b, RandomTape(**event["tape"])))
         p_no_ad = vectors[2] if not baseline and len(vectors) == 3 else None
         actual_q = q if baseline else auction.mixture(event["bid_a"], event["bid_b"])
         if token_id is not None:
@@ -357,19 +357,23 @@ class LiveService:
 
         def row(i):
             value = {"token_id": int(i), "token": self.engine.decode(int(i)), "q": float(q[i])}
+            value["p_output"] = float(i == event["token_id"]) if carried else float(actual_q[i])
             if baseline:
                 value["p"] = float(vectors[0][i])
             else:
                 value.update(p_a=float(vectors[0][i]), p_b=float(vectors[1][i]))
                 if p_no_ad is not None:
                     value.update(p_no_ad=float(p_no_ad[i]),
-                        delta_q_no_ad=float(actual_q[i] - p_no_ad[i]))
+                        delta_q_no_ad=float(actual_q[i] - p_no_ad[i]),
+                        delta_output_no_ad=float(value["p_output"] - p_no_ad[i]))
             return value
 
         # Always show selected and residual candidates, including outside the top rows.
         special = {event["token_id"], outcome["token_id"]}
         special.update(event[k] for k in ("candidate_a", "candidate_b") if event.get(k) is not None)
         return {"run_id": run_id, "step": step, "baseline": baseline,
+            "selection_rule": event.get("selection_rule", "baseline" if baseline else "auction"),
+            "continuation": event.get("continuation"),
             "rows": [row(i) for i in ids], "pinned": [row(i) for i in sorted(special)],
             "total": len(q), "offset": offset, "limit": limit,
             "outcome": {**outcome, "token": self.engine.decode(outcome["token_id"])},
@@ -380,6 +384,7 @@ class LiveService:
                 "tv_a": float(np.abs(vectors[0] - p_no_ad).sum() / 2),
                 "tv_b": float(np.abs(vectors[1] - p_no_ad).sum() / 2),
                 "tv_q": float(np.abs(actual_q - p_no_ad).sum() / 2),
+                "tv_output": float(1 - p_no_ad[event["token_id"]]) if carried else float(np.abs(actual_q - p_no_ad).sum() / 2),
                 "tv_preview": float(np.abs(q - p_no_ad).sum() / 2),
             },
         }

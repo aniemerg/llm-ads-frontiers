@@ -14,6 +14,7 @@ import numpy as np
 import torch
 
 from auction import RandomTape, TwoBidderAuction
+from token_auction_lab.continuation import WinnerContinuation, validate_continuation
 from token_auction_lab.decoder import SharedPrefixDecoder
 from token_auction_lab.limits import MAX_OUTPUT_TOKENS
 from token_auction_lab.prompts import prompt_hash
@@ -29,8 +30,13 @@ class RoundConfig:
     top_k: int = 8
     baseline: bool = False
     checkpoint_steps: tuple[int, ...] = (0, 8, 24)
+    continuation_tokens: int = 0
+    continuation_threshold: float = .98
 
     def __post_init__(self):
+        validate_continuation(self.continuation_tokens, self.continuation_threshold)
+        if self.baseline and self.continuation_tokens:
+            raise ValueError("The no-ad baseline cannot grant advertiser continuation.")
         if not all(math.isfinite(b) and b >= 0 for b in (self.bid_a, self.bid_b)):
             raise ValueError("Bids must be finite and nonnegative.")
         total = self.bid_a + self.bid_b
@@ -139,7 +145,21 @@ def run_round(
         "prompts": [
             {"text": text, "sha256": prompt_hash(text), "token_ids": ids} for text, ids in prompts
         ],
-        "sampler": "no_ad_categorical" if config.baseline else "auction.TwoBidderAuction",
+        "sampler": "no_ad_categorical" if config.baseline else (
+            "experimental_winner_continuation" if config.continuation_tokens else "auction.TwoBidderAuction"),
+        "continuation_policy": {
+            "max_extra_tokens": config.continuation_tokens,
+            "confidence_threshold": config.continuation_threshold,
+            "probabilities": "After the configured temperature, over the full vocabulary.",
+            "payment": "No additional charge for carried tokens.",
+            "rule": "A contested winner may emit the unique token meeting the confidence threshold. "
+                "Recheck at each prefix; stop at the first miss or the extra-token limit. "
+                "Carried tokens do not renew the allowance. Shared outcomes grant no continuation.",
+            "distribution_note": "On carried steps, actual output probability is 1 for the chosen token "
+                "and 0 otherwise; q remains the hypothetical reference auction mixture. "
+                "Reference auction guarantees do not extend to this sequence mechanism.",
+            "rng_note": "Carried steps consume no random tape; fresh auctions use the next tape.",
+        },
         "credit_unit": "simulated",
         "rng": "numpy.PCG64",
         "stopping_policy": "Sample until a configured EOS token, max_tokens safety limit, "
@@ -174,6 +194,8 @@ def run_round(
     disagreements = []
     stop_reason = "length"
     text = ""
+    continuation = WinnerContinuation(config.continuation_tokens, config.continuation_threshold)
+    carried_tokens = 0
     with (output / "events.jsonl").open("w") as trace:
         for step in range(config.max_tokens):
             if should_stop and should_stop():
@@ -194,8 +216,15 @@ def run_round(
             else:
                 p_a, p_b = distributions
                 auction = TwoBidderAuction(p_a, p_b)
-                tape = RandomTape.draw(rng)
-                allocation = auction.resolve(config.bid_a, config.bid_b, tape)
+                carried = continuation.take(p_a, p_b)
+                if carried:
+                    allocation, carry_info = carried
+                    tape = None
+                    carried_tokens += 1
+                else:
+                    tape = RandomTape.draw(rng)
+                    allocation = auction.resolve(config.bid_a, config.bid_b, tape)
+                    continuation.observe_auction(allocation, step)
                 selected = allocation.token_id
                 q = auction.mixture(config.bid_a, config.bid_b)
                 if not (
@@ -212,14 +241,17 @@ def run_round(
                     "bid_b": config.bid_b,
                     "shared_mass": auction.shared_mass,
                     "disagreement_mass": auction.disagreement,
-                    "tape": asdict(tape),
-                    "threshold_a": config.bid_b * tape.contest / (1 - tape.contest),
-                    "threshold_b": config.bid_a * (1 - tape.contest) / tape.contest,
+                    "selection_rule": "winner_continuation" if carried else "auction",
+                    "continuation": carry_info if carried else None,
+                    "tape": asdict(tape) if tape else None,
+                    "threshold_a": config.bid_b * tape.contest / (1 - tape.contest) if tape else None,
+                    "threshold_b": config.bid_a * (1 - tape.contest) / tape.contest if tape else None,
                     "top_tokens": top_tokens(tokenizer, p_a, p_b, q, config.top_k, p_no_ad),
                     "selected_probabilities": {
                         "p_a": float(p_a[selected]),
                         "p_b": float(p_b[selected]),
                         "q": float(q[selected]),
+                        "p_output": 1.0 if carried else float(q[selected]),
                     },
                     "candidate_a_text": None if allocation.candidate_a is None else tokenizer.decode(
                         [allocation.candidate_a], clean_up_tokenization_spaces=False
@@ -228,15 +260,19 @@ def run_round(
                         [allocation.candidate_b], clean_up_tokenization_spaces=False
                     ),
                 }
+                for row in event["top_tokens"]:
+                    row["p_output"] = float(row["token_id"] == selected) if carried else row["q"]
                 if reference:
                     event["selected_probabilities"].update(
                         p_no_ad=float(p_no_ad[selected]),
                         delta_q_no_ad=float(q[selected] - p_no_ad[selected]),
+                        delta_output_no_ad=float((1.0 if carried else q[selected]) - p_no_ad[selected]),
                     )
                     event["no_ad_comparison"] = {
                         "tv_a": float(np.abs(p_a - p_no_ad).sum() / 2),
                         "tv_b": float(np.abs(p_b - p_no_ad).sum() / 2),
                         "tv_q": float(np.abs(q - p_no_ad).sum() / 2),
+                        "tv_output": float(1 - p_no_ad[selected]) if carried else float(np.abs(q - p_no_ad).sum() / 2),
                     }
                 if step in config.checkpoint_steps:
                     filename = f"checkpoint-{step:03}.npz"
@@ -330,6 +366,7 @@ def run_round(
             "token_ids": decoder.generated,
             "text": text,
             "tokens": count,
+            "carried_tokens": carried_tokens,
             "stop_reason": stop_reason,
             "payment_a": cumulative_a,
             "payment_b": cumulative_b,

@@ -48,10 +48,26 @@ The default safety ceiling is **4,096 tokens**, replacing the original 96-token
 demo cap; a smaller ceiling can still be set for a bounded experiment.
 **Stop generation** ends the active work after the current operation and validates
 the preserved prefix. Selected tokens, probabilities, and simulated charges are
-kept. Stopping during the ad response also skips the independent no-ad answer;
-stopping during that answer preserves the already completed ad response.
+kept. No separate ad-free answer is generated. The prompt-only observer follows the
+same generated prefix to supply the inspector’s no-ad probabilities.
 The stop indicator distinguishes **model ended response**, **safety limit ·
 truncated**, and **stopped by you · partial**. Inputs unlock after validation.
+
+**Winner continuation (experimental)** defaults to **3 extra tokens at 98%
+confidence**, with no additional charge. After a contested win, the winner gets
+its predicted next token when that token meets the threshold. Confidence is
+recomputed after each token, using the configured temperature. A miss or an
+exhausted allowance returns to a fresh auction immediately; carried tokens do
+not renew the allowance. Set **Extra tokens** to **0** for the original reference
+auction. Both controls remain fixed during a run and require manual Refresh.
+The `↳` marker and dashed border identify carried tokens in the winner's color.
+Their inspector shows the source win, confidence, allowance, and zero charges.
+**Actual p** is 100% on a carried token; **Auction q** is the hypothetical mixture
+that was bypassed. Local bid previews remain available on fresh auction steps.
+This extension does not inherit the reference mechanism's guarantees; see
+[MECHANISM.md](MECHANISM.md). The prompt-only observer does not select tokens; the explicit zero-bid baseline
+does not use continuation.
+
 The saved defaults use the Fort Mason conference prompt, Bayview Hotel, and
 Lantern House from the captured user run.
 
@@ -84,17 +100,18 @@ removes any general constraints in those shared instructions; it is a reference
 to the unconditioned user request, not an estimate of just the objective's effect.
 
 Inspect each ad-selected token, the full vocabulary, random tape, and simulated
-charges for both advertisers. **Ad mixture q** is the bid-weighted probability
-distribution actually sampled by the auction; it is not the no-ad baseline.
+charges for both advertisers. **Auction q** is the bid-weighted probability
+distribution sampled on fresh auction steps. On carried steps it is hypothetical;
+the inspector separately shows the deterministic **Actual p**. Neither is the
+no-ad baseline.
 **No-ad p** comes from an independent context that receives the same exact
 auction-selected token IDs. The inspector compares distributions at that fixed
 prefix, including percentage-point changes and full-vocabulary total variation.
 The prefix can already contain ad content. This observer does not bid, sample,
 or change the two-bidder mechanism. Its cache is separately validated.
 
-The separate no-ad answer follows its own sampled prefix and never incurs
-advertiser charges. Its text is useful for comparing whole responses, while the
-observer is needed for comparing next-token probabilities at the same prefix.
+The hidden separate no-ad answer is no longer generated. The observer supplies
+next-token probabilities without generating its own response.
 Counterfactual bid controls freeze that token's prefix, distributions, and tape;
 they leave the generated message and its charges unchanged. Setting both main
 bids to zero generates only the prompt-only answer on the next refresh.
@@ -123,13 +140,13 @@ versions; pip resolves within the ranges in `pyproject.toml`.
 
 The CPU auction reference only needs `pip install -r requirements.txt`.
 Without the inference dependencies, decoder tests are explicitly skipped.
-The complete suite has 44 tests: all 11 original auction tests, two prompt tests,
-and sixteen decoder tests using tiny randomly initialized Qwen models. These
+The complete suite has 52 tests: all 11 original auction tests, two prompt tests,
+and eighteen decoder tests using tiny randomly initialized Qwen models. These
 synthetic models test mechanics and cache correctness, not text quality.
 Three additional walkthrough tests check archived evidence fidelity, the source
 file allowlist, and browser counterfactuals against 312 Python-reference cases.
 The last check uses Node.js and is explicitly skipped when Node is unavailable.
-Twelve live-service tests cover editable prompts and bid isolation, validation,
+Fourteen live-service tests cover editable prompts and bid isolation, validation,
 immutable round inputs and concurrency, full-vector inspection, preservation of
 failed attempts, and rejection of cross-origin inference requests. These use
 synthetic fixtures and do not establish model quality.
@@ -138,12 +155,17 @@ the former shared-facts expectation is now private-brief isolation. New checks
 cover both directions of private edits and common task/instruction edits.
 The new checks verify that the no-ad observer matches a full-prefix forward,
 leaves auction tokens/tapes/payments unchanged, includes no-ad candidates in the
-display table, and preserves both outputs if the independent answer fails.
+display table, and does not generate a redundant independent answer.
 EOS coverage includes a 101-token response and a separate no-ad completion.
-Stop tests cover an empty prefix, preserving tokens/payments/caches, skipping or
-stopping the independent reference, stale/cross-origin requests, and keeping the
+Stop tests cover an empty prefix, preserving tokens/payments/caches, avoiding
+a redundant independent answer, stale/cross-origin requests, and keeping the
 worker locked until it finishes. The old 97-token rejection assertion is now a
 4,097-token rejection: this changes the resource bound, not the auction math.
+Four continuation-policy tests cover both winners, the confidence boundary,
+allowance exhaustion, shared outcomes, and disabled mode. Added decoder checks
+exercise return to auction and carried EOS across real tiny-model caches; live
+contract checks distinguish the deterministic output from hypothetical auction
+probabilities. No existing reference tests or mathematical targets were replaced.
 
 ## Run a live smoke test
 

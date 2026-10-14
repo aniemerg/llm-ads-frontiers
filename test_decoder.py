@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 import numpy as np
 
-from auction import Allocation, TwoBidderAuction
+from auction import Allocation, RandomTape, TwoBidderAuction
 from token_auction_lab.prompts import messages, scenarios
 
 try:
@@ -280,7 +280,71 @@ class DecoderTests(unittest.TestCase):
             self.assertEqual(result["payment_a"] + result["payment_b"], 0)
             self.assertEqual(len(result["cache_max_absolute_errors"]), 1)
 
-    def test_live_stop_skips_or_stops_independent_reference(self):
+    def test_continuation_limit_returns_to_auction_and_carried_eos_reaches_all_caches(self):
+        original = SharedPrefixDecoder.distributions
+        events = []
+
+        def distributions(decoder, temperature):
+            if len(decoder.contexts) == 1:
+                return original(decoder, temperature)
+            a, b = np.zeros(17), np.zeros(17)
+            step = len(decoder.generated)
+            if step == 0:
+                a[2], b[3] = 1, 1
+            elif step < 5:
+                a[5], a[0], b[6], b[0] = .98, .02, .99, .01
+            else:
+                a[5], b[16], b[0] = 1, .98, .02
+            return [a, b]
+
+        with (tempfile.TemporaryDirectory() as tmp,
+            patch.object(SharedPrefixDecoder, "distributions", distributions),
+            patch("token_auction_lab.runner.RandomTape.draw", side_effect=[
+                RandomTape(.5, .5, .5, .25), RandomTape(.5, .5, .5, .9),
+            ]) as draws):
+            result = run_round(self.model, TestTokenizer(), [("A", [1]), ("B", [2, 3])],
+                RoundConfig(max_tokens=12, continuation_tokens=3), Path(tmp)/"carry", {},
+                mode="synthetic_model_test", no_ad_prompt=("User", [4]),
+                on_event=lambda e: events.append(e) if e["type"] == "token" else None)
+            self.assertEqual(result["token_ids"], [2, 5, 5, 5, 6, 16])
+            self.assertEqual(result["stop_reason"], "eos")
+            self.assertEqual(result["carried_tokens"], 4)
+            self.assertEqual(draws.call_count, 2)
+            self.assertAlmostEqual(result["payment_a"], 1/3)
+            self.assertAlmostEqual(result["payment_b"], 1/9)
+            self.assertTrue(result["shared_suffix_verified"])
+            self.assertTrue(result["no_ad_reference_validation"]["shared_suffix_verified"])
+            for step in (1, 2, 3, 5):
+                event = events[step]
+                self.assertEqual(event["selection_rule"], "winner_continuation")
+                self.assertIsNone(event["tape"])
+                self.assertEqual(event["payment_a"] + event["payment_b"], 0)
+                self.assertEqual(event["selected_probabilities"]["p_output"], 1)
+                self.assertLess(event["selected_probabilities"]["q"], 1)
+            self.assertEqual(events[4]["selection_rule"], "auction")
+            manifest = json.loads((Path(tmp)/"carry/manifest.json").read_text())
+            self.assertEqual(manifest["sampler"], "experimental_winner_continuation")
+            self.assertEqual(manifest["config"]["continuation_threshold"], .98)
+
+    def test_confidence_miss_auctions_the_same_step(self):
+        events = []
+        p = np.zeros(17)
+        p[5], p[6] = .97, .03
+        with (tempfile.TemporaryDirectory() as tmp,
+            patch.object(SharedPrefixDecoder, "distributions", return_value=[p, p]),
+            patch("token_auction_lab.runner.TwoBidderAuction.resolve",
+                side_effect=[Allocation(5, "A", .2, 0, 5, 6),
+                    Allocation(16, "B", 0, .4, 5, 16)]) as auctions):
+            result = run_round(self.model, TestTokenizer(), [("A", [1]), ("B", [2])],
+                RoundConfig(max_tokens=10, continuation_tokens=3), Path(tmp)/"miss", {},
+                mode="synthetic_model_test", on_event=events.append)
+            self.assertEqual(result["token_ids"], [5, 16])
+            self.assertEqual(result["carried_tokens"], 0)
+            self.assertEqual(auctions.call_count, 2)
+            self.assertEqual(result["payment_a"], .2)
+            self.assertEqual(result["payment_b"], .4)
+
+    def test_live_runs_only_ad_response_and_keeps_stop_support(self):
         from token_auction_lab.live import InferenceEngine, LiveRequest, default_inputs
 
         class ChatTokenizer(TestTokenizer):
@@ -314,14 +378,15 @@ class DecoderTests(unittest.TestCase):
                 if phase == "ad":
                     self.assertEqual(result["tokens"], 1)
                     self.assertEqual(result["stop_reason"], "user_stop")
-                    self.assertEqual(result["no_ad_status"], "skipped_user_stop")
                     self.assertFalse(any(e["type"] == "no_ad_event" for e in observed))
                     self.assertFalse((Path(tmp)/"live/no-ad").exists())
                 else:
                     self.assertEqual(result["tokens"], 4)
                     self.assertEqual(result["stop_reason"], "length")
-                    self.assertEqual(result["no_ad_result"]["tokens"], 1)
-                    self.assertEqual(result["no_ad_result"]["stop_reason"], "user_stop")
+                self.assertNotIn("no_ad_result", result)
+                self.assertFalse(any(e["type"] == "no_ad_event" for e in observed))
+                self.assertFalse((Path(tmp)/"live/no-ad").exists())
+                self.assertTrue(result["no_ad_reference_validation"]["shared_suffix_verified"])
 
     def test_no_ad_observer_matches_full_prefix_without_changing_auction(self):
         self.model.generation_config.eos_token_id = None

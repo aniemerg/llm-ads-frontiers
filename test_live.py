@@ -143,6 +143,45 @@ class LiveContractTests(unittest.TestCase):
         self.assertEqual(baseline, [{"role": "user", "content": request.prompt}])
         self.assertNotIn(request.advertisers[0].facts, baseline[0]["content"])
 
+    def test_continuation_inputs_validate_and_never_enter_prompts(self):
+        defaults = default_inputs()
+        self.assertEqual(defaults["continuation_tokens"], 3)
+        self.assertEqual(defaults["continuation_threshold"], .98)
+        enabled = LiveRequest.parse(defaults)
+        disabled = LiveRequest.parse({**defaults, "continuation_tokens": 0, "continuation_threshold": .75})
+        for side in (0, 1, None):
+            self.assertEqual(live_messages(enabled, side), live_messages(disabled, side))
+        for changes in [{"continuation_tokens": -1}, {"continuation_tokens": 33},
+                {"continuation_tokens": True}, {"continuation_threshold": .5},
+                {"continuation_threshold": float("nan")}]:
+            with self.assertRaises(ValueError):
+                LiveRequest.parse({**defaults, **changes})
+        defaults.pop("continuation_tokens")
+        defaults.pop("continuation_threshold")
+        self.assertEqual(LiveRequest.parse(defaults).continuation_tokens, 0)
+
+    def test_carried_inspector_distinguishes_actual_output_from_hypothetical_mixture(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            engine = HeldEngine()
+            service = LiveService(Path(tmp), engine)
+            a, b, no_ad = np.array([.99, .01, 0]), np.array([0, .01, .99]), np.array([.2, .7, .1])
+            event = {"token_id": 0, "branch": "A", "bid_a": 1, "bid_b": 1,
+                "selection_rule": "winner_continuation", "continuation": {"source_step": 0},
+                "tape": None, "payment_a": 0, "payment_b": 0}
+            service.current = {"run_id": "synthetic-carry", "events": [event], "vectors": {0: [a, b, no_ad]}}
+            result = service.inspect("synthetic-carry", 0)
+            rows = {r["token_id"]: r for r in result["rows"]}
+            self.assertEqual(result["selection_rule"], "winner_continuation")
+            self.assertEqual(rows[0]["p_output"], 1)
+            self.assertEqual(rows[2]["p_output"], 0)
+            self.assertAlmostEqual(rows[0]["q"], .495)
+            self.assertAlmostEqual(rows[0]["delta_output_no_ad"], .8)
+            self.assertAlmostEqual(result["no_ad_comparison"]["tv_output"], .8)
+            self.assertFalse(result["counterfactual"])
+            self.assertEqual(result["outcome"]["payment_a"], 0)
+            with self.assertRaisesRegex(ValueError, "previous win"):
+                service.inspect("synthetic-carry", 0, a=2)
+
     def test_no_ad_prompt_is_independent_of_every_ad_input(self):
         payload = default_inputs()
         original = live_messages(LiveRequest.parse(payload), None)

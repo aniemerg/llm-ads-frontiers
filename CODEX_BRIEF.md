@@ -30,6 +30,11 @@ need not be loaded twice. Keep both prompts short. The initial smoke runs used a
 96-token cap. The live interface now runs until EOS, with a configurable safety
 ceiling of at most 4,096 tokens and a manual stop control (user-requested update,
 October 14, 2026). A safety cutoff or manual stop is labeled as partial output.
+The user also requested experimental winner continuation: a contested winner
+may receive up to three additional tokens at no charge when its next-token
+probability is at least 98%. The live controls expose the limit and threshold;
+zero extra tokens selects the original reference auction. See MECHANISM.md for
+the exact state transitions and limits of the reference guarantees.
 
 Proposed web layer: FastAPI, a React/TypeScript client, server-sent events, and
 JSONL traces. Start with one live generation at a time. Browser clients must not
