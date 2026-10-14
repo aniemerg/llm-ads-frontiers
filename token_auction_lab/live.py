@@ -17,6 +17,7 @@ import time
 import uuid
 
 from token_auction_lab.prompts import ADVERTISER_PROMPT_POLICY
+from token_auction_lab.limits import MAX_OUTPUT_TOKENS
 
 MODEL = "Qwen/Qwen3-4B-Instruct-2507"
 REVISION = "cdbee75f17c01a7cc42f958dc650907174af0554"
@@ -83,7 +84,7 @@ class LiveRequest:
             ) for i, ad in enumerate(ads)),
             numeric(value.get("seed"), "Seed", 0, 2**32 - 1, integer=True),
             numeric(value.get("temperature"), "Temperature", .05, 2),
-            numeric(value.get("max_tokens"), "Token cap", 1, 96, integer=True),
+            numeric(value.get("max_tokens"), "Safety token limit", 1, MAX_OUTPUT_TOKENS, integer=True),
         )
 
     @property
@@ -157,7 +158,7 @@ class InferenceEngine:
     def decode(self, token_id):
         return self.tokenizer.decode([token_id], clean_up_tokenization_spaces=False)
 
-    def run(self, request, output, on_event, on_distributions):
+    def run(self, request, output, on_event, on_distributions, *, should_stop=None):
         import torch
         from token_auction_lab.runner import RoundConfig, run_round
 
@@ -187,10 +188,16 @@ class InferenceEngine:
         metadata["no_ad_prompt_policy"] = "Only the user message; excludes shared ad instructions, briefs, objectives, and bids."
         if request.baseline:
             return run_round(self.model, self.tokenizer, prompts, config, output, metadata,
-                on_event=on_event, on_distributions=on_distributions)
+                on_event=on_event, on_distributions=on_distributions, should_stop=should_stop)
         no_ad_prompt = prompts.pop()
         result = run_round(self.model, self.tokenizer, prompts, config, output, metadata,
-            on_event=on_event, on_distributions=on_distributions, no_ad_prompt=no_ad_prompt)
+            on_event=on_event, on_distributions=on_distributions, no_ad_prompt=no_ad_prompt,
+            should_stop=should_stop)
+
+        if should_stop and should_stop():
+            result["no_ad_status"] = "skipped_user_stop"
+            (output / "result.json").write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n")
+            return result
 
         def emit_no_ad(event):
             on_event({"type": "no_ad_event", "event": event})
@@ -200,7 +207,7 @@ class InferenceEngine:
             RoundConfig(0, 0, seed=request.seed, temperature=request.temperature,
                 max_tokens=request.max_tokens, baseline=True),
             output / "no-ad", {**metadata, "comparison_parent": output.name},
-            on_event=emit_no_ad)
+            on_event=emit_no_ad, should_stop=should_stop)
         result["no_ad_result"] = no_ad_result
         (output / "result.json").write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n")
         return result
@@ -215,6 +222,7 @@ class LiveService:
         self.lock = threading.Lock()
         self.current = None
         self.worker = None
+        self.stop_event = None
 
     def start(self, payload):
         request = LiveRequest.parse(payload)
@@ -227,13 +235,27 @@ class LiveService:
                 "run_id": run_id, "status": "loading", "inputs": asdict(request),
                 "events": [], "vectors": {}, "manifest": None, "result": None,
                 "error": None, "created_at": datetime.now(timezone.utc).isoformat(),
+                "stop_requested": False,
                 "no_ad": {"events": [], "manifest": None, "result": None},
             }
-            self.worker = threading.Thread(target=self._run, args=(request, run_id), daemon=True)
+            self.stop_event = threading.Event()
+            self.worker = threading.Thread(target=self._run,
+                args=(request, run_id, self.stop_event), daemon=True)
             self.worker.start()
             return run_id
 
-    def _run(self, request, run_id):
+    def stop(self, run_id):
+        if not isinstance(run_id, str) or not run_id:
+            raise ValueError("Choose the active run to stop.")
+        with self.lock:
+            if not self.current or self.current["run_id"] != run_id:
+                raise StaleRunError("That run is no longer active; no stop was requested.")
+            if self.current["status"] in BUSY:
+                self.stop_event.set()
+                self.current["stop_requested"] = True
+            return {"run_id": run_id, "stop_requested": self.current["stop_requested"]}
+
+    def _run(self, request, run_id, stop_event):
         output = self.output_root / run_id
         try:
             self.engine.load()
@@ -271,10 +293,11 @@ class LiveService:
                         elif e["type"] == "round_end":
                             self.current["no_ad"]["result"] = deepcopy(e)
 
-            result = self.engine.run(request, output, emit, retain)
+            result = self.engine.run(request, output, emit, retain,
+                should_stop=stop_event.is_set)
             with self.lock:
                 self.current["result"] = result
-                self.current["status"] = "complete"
+                self.current["status"] = "stopped" if stop_event.is_set() else "complete"
         except Exception as error:
             message = f"{type(error).__name__}: {error}"
             output.mkdir(parents=True, exist_ok=True)

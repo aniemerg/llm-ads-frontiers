@@ -40,9 +40,18 @@ the current suite also includes walkthrough and live-service checks below.
 
 Open **http://127.0.0.1:8765/#live** to edit the shared prompt and instructions,
 both advertisers' brands, facts, objectives and bids, seed, temperature, and
-token cap. Changes mark the result stale. Only **Refresh inference** starts a
+safety token limit. Changes mark the result stale. Only **Refresh inference** starts a
 new model run; opening the page or editing a field does not. Inputs are locked
 and a spinner is shown during generation and cache validation.
+Generation normally finishes when the model selects its end-of-response token.
+The default safety ceiling is **4,096 tokens**, replacing the original 96-token
+demo cap; a smaller ceiling can still be set for a bounded experiment.
+**Stop generation** ends the active work after the current operation and validates
+the preserved prefix. Selected tokens, probabilities, and simulated charges are
+kept. Stopping during the ad response also skips the independent no-ad answer;
+stopping during that answer preserves the already completed ad response.
+The stop indicator distinguishes **model ended response**, **safety limit ·
+truncated**, and **stopped by you · partial**. Inputs unlock after validation.
 The saved defaults use the Fort Mason conference prompt, Bayview Hotel, and
 Lantern House from the captured user run.
 
@@ -114,13 +123,13 @@ versions; pip resolves within the ranges in `pyproject.toml`.
 
 The CPU auction reference only needs `pip install -r requirements.txt`.
 Without the inference dependencies, decoder tests are explicitly skipped.
-The complete suite has 38 tests: all 11 original auction tests, two prompt tests,
-and eleven decoder tests using tiny randomly initialized Qwen models. These
+The complete suite has 44 tests: all 11 original auction tests, two prompt tests,
+and sixteen decoder tests using tiny randomly initialized Qwen models. These
 synthetic models test mechanics and cache correctness, not text quality.
 Three additional walkthrough tests check archived evidence fidelity, the source
 file allowlist, and browser counterfactuals against 312 Python-reference cases.
 The last check uses Node.js and is explicitly skipped when Node is unavailable.
-Eleven live-service tests cover editable prompts and bid isolation, validation,
+Twelve live-service tests cover editable prompts and bid isolation, validation,
 immutable round inputs and concurrency, full-vector inspection, preservation of
 failed attempts, and rejection of cross-origin inference requests. These use
 synthetic fixtures and do not establish model quality.
@@ -130,6 +139,11 @@ cover both directions of private edits and common task/instruction edits.
 The new checks verify that the no-ad observer matches a full-prefix forward,
 leaves auction tokens/tapes/payments unchanged, includes no-ad candidates in the
 display table, and preserves both outputs if the independent answer fails.
+EOS coverage includes a 101-token response and a separate no-ad completion.
+Stop tests cover an empty prefix, preserving tokens/payments/caches, skipping or
+stopping the independent reference, stale/cross-origin requests, and keeping the
+worker locked until it finishes. The old 97-token rejection assertion is now a
+4,097-token rejection: this changes the resource bound, not the auction math.
 
 ## Run a live smoke test
 
@@ -149,7 +163,9 @@ The default device selection is CUDA, then Apple MPS, then CPU. MPS defaults to
 float32 after the live float16 run failed cache validation. Override with
 `--device` and `--dtype`. The model is loaded once for the bid-pair sweep.
 Use `--scenario competing-hotels` for the second preset, and repeat `--bids A,B`
-to specify a different sweep. The token cap must be between 1 and 96.
+to specify a different sweep. The safety token limit must be between 1 and 4,096.
+The example above retains the original 96-token smoke-test bound; use
+`--max-tokens 4096` to give the model room to finish naturally.
 Zero/zero bids are only valid through the no-ad baseline.
 
 Once the model is cached, add `--local-files-only` with the full revision SHA

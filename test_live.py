@@ -38,8 +38,10 @@ class HeldEngine:
     def decode(self, token):
         return ["shuttle", "weekend", "courtyard"][token]
 
-    def run(self, request, output, emit, retain):
+    def run(self, request, output, emit, retain, *, should_stop=None):
         self.requests.append(request)
+        if should_stop and should_stop():
+            return {"text": "", "tokens": 0, "stop_reason": "user_stop", "mode": "synthetic_fixture"}
         p_a, p_b = np.array([.6, .3, .1]), np.array([.1, .3, .6])
         tape = RandomTape(.9, .2, .7, .4)
         allocation = TwoBidderAuction(p_a, p_b).resolve(
@@ -120,12 +122,15 @@ class LiveContractTests(unittest.TestCase):
 
     def test_validation_and_separate_zero_bid_baseline(self):
         invalid = [
-            {"advertisers": []}, {"seed": 1.2}, {"max_tokens": 97},
+            {"advertisers": []}, {"seed": 1.2}, {"max_tokens": 4097},
+            {"max_tokens": 0}, {"max_tokens": 1.5}, {"max_tokens": True},
             {"prompt": ""}, {"temperature": float("nan")}, {"seed": True},
         ]
         for change in invalid:
             with self.assertRaises(ValueError):
                 LiveRequest.parse({**default_inputs(), **change})
+        self.assertEqual(default_inputs()["max_tokens"], 4096)
+        self.assertEqual(LiveRequest.parse({**default_inputs(), "max_tokens": 97}).max_tokens, 97)
         payload = default_inputs()
         payload["advertisers"][0]["bid"] = -1
         with self.assertRaises(ValueError):
@@ -246,6 +251,35 @@ class LiveContractTests(unittest.TestCase):
             service.worker.join(2)
             self.assertEqual(service.snapshot()["status"], "complete")
 
+    def test_stop_keeps_worker_locked_and_resets_for_next_run(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            engine = HeldEngine()
+            service = LiveService(Path(tmp), engine)
+            first = service.start(default_inputs())
+            self.assertTrue(engine.started.wait(1))
+            try:
+                with self.assertRaises(StaleRunError):
+                    service.stop("another-run")
+                self.assertFalse(service.snapshot()["stop_requested"])
+                self.assertTrue(service.stop(first)["stop_requested"])
+                self.assertTrue(service.stop(first)["stop_requested"])
+                self.assertEqual(service.snapshot()["status"], "loading")
+                with self.assertRaises(BusyError):
+                    service.start(default_inputs())
+            finally:
+                engine.release.set()
+                service.worker.join(2)
+            stopped = service.snapshot()
+            self.assertEqual(stopped["status"], "stopped")
+            self.assertEqual(stopped["result"]["stop_reason"], "user_stop")
+            second = service.start(default_inputs())
+            service.worker.join(2)
+            self.assertEqual(service.snapshot()["status"], "complete")
+            self.assertFalse(service.snapshot()["stop_requested"])
+            with self.assertRaises(StaleRunError):
+                service.stop(first)
+            self.assertFalse(service.stop(second)["stop_requested"])
+
     def test_http_rejects_cross_origin_and_busy_requests(self):
         with tempfile.TemporaryDirectory() as tmp:
             engine = HeldEngine()
@@ -253,13 +287,15 @@ class LiveContractTests(unittest.TestCase):
             server.live = LiveService(Path(tmp), engine)
             thread = threading.Thread(target=server.serve_forever, daemon=True)
             thread.start()
-            url = f"http://127.0.0.1:{server.server_port}/api/live/run"
+            url = f"http://127.0.0.1:{server.server_port}/api/live"
 
-            def post(origin=None):
+            def post(origin=None, route="/run", payload=None):
                 headers = {"Content-Type": "application/json"}
                 if origin:
                     headers["Origin"] = origin
-                return urlopen(Request(url, data=json.dumps(default_inputs()).encode(), headers=headers), timeout=3)
+                return urlopen(Request(url + route,
+                    data=json.dumps(default_inputs() if payload is None else payload).encode(),
+                    headers=headers), timeout=3)
 
             try:
                 with self.assertRaises(HTTPError) as rejected:
@@ -267,9 +303,21 @@ class LiveContractTests(unittest.TestCase):
                 self.assertEqual(rejected.exception.code, 403)
                 with post() as response:
                     self.assertEqual(response.status, 202)
+                    run_id = json.load(response)["run_id"]
                 with self.assertRaises(HTTPError) as busy:
                     post()
                 self.assertEqual(busy.exception.code, 409)
+                with self.assertRaises(HTTPError) as rejected:
+                    post("https://example.com", "/stop", {"run_id": run_id})
+                self.assertEqual(rejected.exception.code, 403)
+                with self.assertRaises(HTTPError) as stale:
+                    post(route="/stop", payload={"run_id": "other-run"})
+                self.assertEqual(stale.exception.code, 409)
+                with self.assertRaises(HTTPError) as invalid:
+                    post(route="/stop", payload=[])
+                self.assertEqual(invalid.exception.code, 400)
+                with post(route="/stop", payload={"run_id": run_id}) as response:
+                    self.assertTrue(json.load(response)["stop_requested"])
             finally:
                 engine.release.set()
                 if server.live.worker:

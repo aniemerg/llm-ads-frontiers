@@ -15,6 +15,7 @@ import torch
 
 from auction import RandomTape, TwoBidderAuction
 from token_auction_lab.decoder import SharedPrefixDecoder
+from token_auction_lab.limits import MAX_OUTPUT_TOKENS
 from token_auction_lab.prompts import prompt_hash
 
 
@@ -41,8 +42,10 @@ class RoundConfig:
             raise ValueError("Use --baseline for all-zero bids.")
         if not math.isfinite(self.temperature) or self.temperature <= 0:
             raise ValueError("Temperature must be finite and positive.")
-        if not 1 <= self.max_tokens <= 96 or not 1 <= self.top_k <= 20:
-            raise ValueError("max_tokens must be 1..96 and top_k must be 1..20.")
+        if (isinstance(self.max_tokens, bool) or not isinstance(self.max_tokens, int)
+                or not 1 <= self.max_tokens <= MAX_OUTPUT_TOKENS or not 1 <= self.top_k <= 20):
+            raise ValueError(f"max_tokens must be an integer in 1..{MAX_OUTPUT_TOKENS} "
+                "and top_k must be 1..20.")
         if len(self.checkpoint_steps) > 4 or any(s < 0 for s in self.checkpoint_steps):
             raise ValueError("Retain at most four nonnegative inspection checkpoints per run.")
 
@@ -116,6 +119,7 @@ def run_round(
     on_event: Callable[[dict], None] | None = None,
     on_distributions: Callable[[int, list[np.ndarray]], None] | None = None,
     no_ad_prompt: tuple[str, list[int]] | None = None,
+    should_stop: Callable[[], bool] | None = None,
 ) -> dict:
     expected = 1 if config.baseline else 2
     if len(prompts) != expected:
@@ -138,6 +142,8 @@ def run_round(
         "sampler": "no_ad_categorical" if config.baseline else "auction.TwoBidderAuction",
         "credit_unit": "simulated",
         "rng": "numpy.PCG64",
+        "stopping_policy": "Sample until a configured EOS token, max_tokens safety limit, "
+            "or a user stop request. Finish and record any selected token before stopping.",
         "replay_note": "Recorded tokens replay without inference. A seed alone does not "
         "guarantee identical regeneration across software or hardware.",
     }
@@ -170,6 +176,9 @@ def run_round(
     text = ""
     with (output / "events.jsonl").open("w") as trace:
         for step in range(config.max_tokens):
+            if should_stop and should_stop():
+                stop_reason = "user_stop"
+                break
             distributions = decoder.distributions(config.temperature)
             p_no_ad = reference.distributions(config.temperature)[0] if reference else None
             if on_distributions:
@@ -327,8 +336,8 @@ def run_round(
             "prefill_seconds": prefilled - started,
             "seconds": ended - started,
             "time_to_first_token_seconds": first_token_time,
-            "seconds_per_token": (ended - started) / count,
-            "decode_seconds_per_token": (ended - prefilled) / count,
+            "seconds_per_token": (ended - started) / count if count else None,
+            "decode_seconds_per_token": (ended - prefilled) / count if count else None,
             "mean_disagreement_mass": float(np.mean(disagreements)) if disagreements else None,
             "shared_suffix_verified": True,
             "cache_max_absolute_errors": errors,

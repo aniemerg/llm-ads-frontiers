@@ -204,13 +204,124 @@ class DecoderTests(unittest.TestCase):
     def test_config_rejects_zero_pair_and_unbounded_lengths(self):
         for kwargs in [
             {"bid_a": 0, "bid_b": 0},
-            {"max_tokens": 97},
+            {"max_tokens": 4097},
+            {"max_tokens": 0},
+            {"max_tokens": 1.5},
+            {"max_tokens": True},
             {"bid_a": -1},
             {"bid_b": float("nan")},
         ]:
             with self.assertRaises(ValueError):
                 RoundConfig(**kwargs)
         self.assertTrue(RoundConfig(0, 0, baseline=True).baseline)
+        self.assertEqual(RoundConfig(max_tokens=97).max_tokens, 97)
+        self.assertEqual(RoundConfig(max_tokens=4096).max_tokens, 4096)
+
+    def test_generation_passes_96_then_eos_reaches_all_contexts(self):
+        events = []
+        with (tempfile.TemporaryDirectory() as tmp, patch(
+            "token_auction_lab.runner.TwoBidderAuction.resolve",
+            side_effect=[Allocation(5, "shared", 0, 0, None, None)] * 100
+                + [Allocation(16, "shared", 0, 0, None, None)],
+        )):
+            result = run_round(self.model, TestTokenizer(), [("A", [1]), ("B", [2, 3])],
+                RoundConfig(max_tokens=128), Path(tmp)/"long", {},
+                mode="synthetic_model_test", on_event=events.append,
+                no_ad_prompt=("User only", [4, 5, 6]))
+            self.assertEqual(result["token_ids"], [5] * 100 + [16])
+            self.assertEqual(result["stop_reason"], "eos")
+            self.assertEqual(len([e for e in events if e["type"] == "token"]), 101)
+            self.assertTrue(result["shared_suffix_verified"])
+            self.assertTrue(result["no_ad_reference_validation"]["shared_suffix_verified"])
+            self.assertEqual(len(result["cache_max_absolute_errors"]), 2)
+
+    def test_user_stop_preserves_selected_tokens_charges_and_caches(self):
+        tokens = []
+        with tempfile.TemporaryDirectory() as tmp, patch(
+            "token_auction_lab.runner.eos_ids", return_value=set()
+        ):
+            result = run_round(self.model, TestTokenizer(), [("A", [1]), ("B", [2, 3])],
+                RoundConfig(max_tokens=128), Path(tmp)/"stopped", {},
+                mode="synthetic_model_test", no_ad_prompt=("User only", [4, 5]),
+                on_event=lambda e: tokens.append(e) if e["type"] == "token" else None,
+                should_stop=lambda: len(tokens) == 3)
+            self.assertEqual(result["stop_reason"], "user_stop")
+            self.assertEqual(result["token_ids"], [e["token_id"] for e in tokens])
+            self.assertEqual(result["tokens"], 3)
+            for side in ("a", "b"):
+                self.assertEqual(result[f"payment_{side}"], sum(e[f"payment_{side}"] for e in tokens))
+            self.assertEqual(len(result["cache_max_absolute_errors"]), 2)
+            self.assertTrue(result["no_ad_reference_validation"]["shared_suffix_verified"])
+            self.assertEqual(json.loads((Path(tmp)/"stopped/result.json").read_text()), result)
+
+    def test_stop_before_first_token_has_valid_empty_result(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            result = run_round(self.model, TestTokenizer(), [("A", [1]), ("B", [2, 3])],
+                RoundConfig(max_tokens=128), Path(tmp)/"empty", {},
+                mode="synthetic_model_test", should_stop=lambda: True)
+            self.assertEqual(result["stop_reason"], "user_stop")
+            self.assertEqual(result["token_ids"], [])
+            self.assertEqual(result["text"], "")
+            self.assertEqual(result["payment_a"] + result["payment_b"], 0)
+            self.assertIsNone(result["seconds_per_token"])
+            self.assertIsNone(result["time_to_first_token_seconds"])
+
+    def test_baseline_ends_on_eos_with_large_safety_limit(self):
+        p = np.zeros(17)
+        p[16] = 1
+        with (tempfile.TemporaryDirectory() as tmp,
+            patch.object(SharedPrefixDecoder, "distributions", return_value=[p]),
+            patch("token_auction_lab.runner.TwoBidderAuction", side_effect=AssertionError("No auction"))):
+            result = run_round(self.model, TestTokenizer(), [("User", [1, 2])],
+                RoundConfig(0, 0, baseline=True, max_tokens=4096), Path(tmp)/"baseline", {},
+                mode="synthetic_model_test")
+            self.assertEqual(result["token_ids"], [16])
+            self.assertEqual(result["stop_reason"], "eos")
+            self.assertEqual(result["payment_a"] + result["payment_b"], 0)
+            self.assertEqual(len(result["cache_max_absolute_errors"]), 1)
+
+    def test_live_stop_skips_or_stops_independent_reference(self):
+        from token_auction_lab.live import InferenceEngine, LiveRequest, default_inputs
+
+        class ChatTokenizer(TestTokenizer):
+            def apply_chat_template(self, messages, **kwargs):
+                return json.dumps(messages)
+
+            def encode(self, text, **kwargs):
+                return [1, 2]
+
+        for phase in ("ad", "no-ad"):
+            with self.subTest(phase=phase), tempfile.TemporaryDirectory() as tmp:
+                engine = InferenceEngine()
+                engine.model = self.model
+                engine.tokenizer = ChatTokenizer()
+                engine.metadata = {"model_id": "synthetic-tiny-qwen"}
+                stopped = []
+                observed = []
+
+                def emit(event):
+                    observed.append(event)
+                    if (phase == "ad" and event["type"] == "token"
+                        or phase == "no-ad" and event["type"] == "no_ad_event"
+                        and event["event"]["type"] == "token"):
+                        stopped.append(True)
+
+                with (patch("token_auction_lab.runner.eos_ids", return_value=set()),
+                    patch("token_auction_lab.runner.run_round",
+                        side_effect=lambda *a, **kw: run_round(*a, mode="synthetic_model_test", **kw))):
+                    result = engine.run(LiveRequest.parse({**default_inputs(), "max_tokens": 4}),
+                        Path(tmp)/"live", emit, lambda *args: None, should_stop=lambda: bool(stopped))
+                if phase == "ad":
+                    self.assertEqual(result["tokens"], 1)
+                    self.assertEqual(result["stop_reason"], "user_stop")
+                    self.assertEqual(result["no_ad_status"], "skipped_user_stop")
+                    self.assertFalse(any(e["type"] == "no_ad_event" for e in observed))
+                    self.assertFalse((Path(tmp)/"live/no-ad").exists())
+                else:
+                    self.assertEqual(result["tokens"], 4)
+                    self.assertEqual(result["stop_reason"], "length")
+                    self.assertEqual(result["no_ad_result"]["tokens"], 1)
+                    self.assertEqual(result["no_ad_result"]["stop_reason"], "user_stop")
 
     def test_no_ad_observer_matches_full_prefix_without_changing_auction(self):
         self.model.generation_config.eos_token_id = None
