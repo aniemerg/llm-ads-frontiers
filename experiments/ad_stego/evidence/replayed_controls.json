@@ -1,0 +1,88 @@
+[
+  {
+    "mode": "REPLAY_TEXT_ONLY_NEGATIVE_CONTROL",
+    "source": "artifacts/ad-stego-live/20261014T185631.151952Z/short-seed7-unmarked/response.txt",
+    "sha256": "52eefd540c93379d88e39f006467d0a387a512333d8eebdf3a6bfb1be82bcb50",
+    "decoded": {
+      "status": "insufficient_evidence",
+      "spans": [],
+      "coverage": "unknown"
+    }
+  },
+  {
+    "mode": "REPLAY_TEXT_ONLY_NEGATIVE_CONTROL",
+    "source": "artifacts/ad-stego-live/20261014T185631.151952Z/long-seed7-unmarked/response.txt",
+    "sha256": "60219b4945c18688447a5ec86ac5735d29dc711064fa4531489e151293d4a69f",
+    "decoded": {
+      "status": "not_detected",
+      "spans": [],
+      "coverage": "unknown",
+      "hypotheses_tested": 10800,
+      "score_threshold": 109.62962902442493,
+      "ambiguous_blocks": [],
+      "protocol": "coordinate-codeword-green4-exp-v1"
+    }
+  },
+  {
+    "mode": "REPLAY_TEXT_ONLY_NEGATIVE_CONTROL",
+    "source": "artifacts/ad-stego-live/20261014T185631.151952Z/long-seed19-unmarked/response.txt",
+    "sha256": "15738b925a43b56c6b1e9fd32c8bf4ed053649dd0207687534e88a6a67aef7f3",
+    "decoded": {
+      "status": "not_detected",
+      "spans": [],
+      "coverage": "unknown",
+      "hypotheses_tested": 10800,
+      "score_threshold": 109.62962902442493,
+      "ambiguous_blocks": [],
+      "protocol": "coordinate-codeword-green4-exp-v1"
+    }
+  },
+  {
+    "mode": "REPLAY_TEXT_ONLY_NEGATIVE_CONTROL",
+    "source": "artifacts/ad-stego-live/20261014T190535.193785Z/short-seed7-unmarked/response.txt",
+    "sha256": "0424a7b199f8630aea4b49523b73bffe78cf9e97b791749474d43bb75c69715f",
+    "decoded": {
+      "status": "insufficient_evidence",
+      "spans": [],
+      "coverage": "unknown"
+    }
+  },
+  {
+    "mode": "REPLAY_TEXT_ONLY_NEGATIVE_CONTROL",
+    "source": "artifacts/ad-stego-live/20261014T190535.193785Z/long-seed7-unmarked/response.txt",
+    "sha256": "cb8e83f295f3a2e520afe3c47bd07216491dea9addb41825ad42b16a4fd4c9eb",
+    "decoded": {
+      "status": "not_detected",
+      "spans": [],
+      "coverage": "unknown",
+      "hypotheses_tested": 10800,
+      "score_threshold": 109.62962902442493,
+      "ambiguous_blocks": [],
+      "protocol": "coordinate-codeword-green4-exp-v1"
+    }
+  },
+  {
+    "mode": "REPLAY_TEXT_ONLY_NEGATIVE_CONTROL",
+    "source": "artifacts/ad-stego-live/20261014T190535.193785Z/long-seed19-unmarked/response.txt",
+    "sha256": "934c49078ac1d771e8f3116dc4d8a1b7a5881b5e7c814e432689cb57ea2d717f",
+    "decoded": {
+      "status": "detected",
+      "spans": [
+        {
+          "start_token": 80,
+          "end_token": 102,
+          "text": " caf\u00e9. It also provides luggage storage, which is useful if you're traveling with checked items or bikes.  \n\n",
+          "carrier_start": 192,
+          "carrier_end": 256,
+          "score": 110.24305062096983,
+          "nominal_corrected_p": 0.007643294808051715
+        }
+      ],
+      "coverage": "unknown",
+      "hypotheses_tested": 10800,
+      "score_threshold": 109.62962902442493,
+      "ambiguous_blocks": [],
+      "protocol": "coordinate-codeword-green4-exp-v1"
+    }
+  }
+]

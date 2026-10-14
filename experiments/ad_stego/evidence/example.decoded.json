@@ -1,0 +1,28 @@
+{
+  "status": "detected",
+  "spans": [
+    {
+      "start_token": 91,
+      "end_token": 94,
+      "text": " Fort Mason Express",
+      "carrier_start": 128,
+      "carrier_end": 192,
+      "score": 135.55091988852533,
+      "nominal_corrected_p": 2.85863982712028e-08
+    },
+    {
+      "start_token": 165,
+      "end_token": 168,
+      "text": " Paradigm House",
+      "carrier_start": 192,
+      "carrier_end": 256,
+      "score": 127.56892519081504,
+      "nominal_corrected_p": 1.92840129074231e-06
+    }
+  ],
+  "coverage": "unknown",
+  "hypotheses_tested": 10800,
+  "score_threshold": 109.62962902442493,
+  "ambiguous_blocks": [],
+  "protocol": "coordinate-codeword-green4-exp-v1"
+}

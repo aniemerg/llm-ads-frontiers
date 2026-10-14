@@ -1,0 +1,85 @@
+test_bound_surface_prevents_silent_pointer_drift (experiments.ad_stego.test_prototype.SpanStegoTests.test_bound_surface_prevents_silent_pointer_drift) ... ok
+test_fixed_tape_candidates_do_not_change_when_bids_change (experiments.ad_stego.test_prototype.SpanStegoTests.test_fixed_tape_candidates_do_not_change_when_bids_change) ... ok
+test_mixture_and_payments_over_fresh_key_ensemble (experiments.ad_stego.test_prototype.SpanStegoTests.test_mixture_and_payments_over_fresh_key_ensemble) ... ok
+test_no_room_and_unmarked_and_wrong_key_do_not_claim_absence (experiments.ad_stego.test_prototype.SpanStegoTests.test_no_room_and_unmarked_and_wrong_key_do_not_claim_absence) ... ok
+test_null_score_and_gamma_tail (experiments.ad_stego.test_prototype.SpanStegoTests.test_null_score_and_gamma_tail) ... ok
+test_point_mass_has_no_carrier_capacity (experiments.ad_stego.test_prototype.SpanStegoTests.test_point_mass_has_no_carrier_capacity) ... ok
+test_text_only_recovers_two_exact_spans_without_brand_dictionary (experiments.ad_stego.test_prototype.SpanStegoTests.test_text_only_recovers_two_exact_spans_without_brand_dictionary) ... ok
+test_truncated_carrier_returns_only_completed_record (experiments.ad_stego.test_prototype.SpanStegoTests.test_truncated_carrier_returns_only_completed_record) ... ok
+test_two_occurrences_of_same_name_have_distinct_coordinates (experiments.ad_stego.test_prototype.SpanStegoTests.test_two_occurrences_of_same_name_have_distinct_coordinates) ... ok
+test_validation_and_unsupported_input (experiments.ad_stego.test_prototype.SpanStegoTests.test_validation_and_unsupported_input) ... ok
+test_candidates_fixed_across_bid_switch_and_zero_mass_excluded (experiments.ad_stego.test_race.RaceTests.test_candidates_fixed_across_bid_switch_and_zero_mass_excluded) ... ok
+test_fresh_key_mixture_payments_and_residual_independence (experiments.ad_stego.test_race.RaceTests.test_fresh_key_mixture_payments_and_residual_independence) ... ok
+test_null_score_and_point_mass_have_no_information (experiments.ad_stego.test_race.RaceTests.test_null_score_and_point_mass_have_no_information) ... ok
+test_two_spans_from_text_without_brand_list (experiments.ad_stego.test_race.RaceTests.test_two_spans_from_text_without_brand_list) ... ok
+test_coded_mixture_and_payments_follow_original_auction (experiments.ad_stego.test_tilt.TiltTests.test_coded_mixture_and_payments_follow_original_auction) ... ok
+test_entropy_loss_is_branch_information (experiments.ad_stego.test_tilt.TiltTests.test_entropy_loss_is_branch_information) ... ok
+test_exact_binomial_tail_and_impossible_threshold (experiments.ad_stego.test_tilt.TiltTests.test_exact_binomial_tail_and_impossible_threshold) ... ok
+test_joint_null_and_two_text_only_payloads (experiments.ad_stego.test_tilt.TiltTests.test_joint_null_and_two_text_only_payloads) ... ok
+test_joint_sampler_uses_coded_distributions_for_payments (experiments.ad_stego.test_tilt.TiltTests.test_joint_sampler_uses_coded_distributions_for_payments) ... ok
+test_two_spans_decode_without_dictionary (experiments.ad_stego.test_tilt.TiltTests.test_two_spans_decode_without_dictionary) ... ok
+test_zero_strength_and_point_mass_no_created_support (experiments.ad_stego.test_tilt.TiltTests.test_zero_strength_and_point_mass_no_created_support) ... ok
+test_concrete_threshold_fixture (test_auction.AuctionTests.test_concrete_threshold_fixture) ... ok
+test_expected_payment_known_value_positive (test_auction.AuctionTests.test_expected_payment_known_value_positive) ... ok
+test_fixed_prefix_probability_monotonicity (test_auction.AuctionTests.test_fixed_prefix_probability_monotonicity) ... ok
+test_fixed_tape_single_switch_for_each_bidder (test_auction.AuctionTests.test_fixed_tape_single_switch_for_each_bidder) ... ok
+test_identical_distributions_are_always_free (test_auction.AuctionTests.test_identical_distributions_are_always_free) ... ok
+test_invalid_inputs (test_auction.AuctionTests.test_invalid_inputs) ... ok
+test_monte_carlo_distribution_payments_and_bounds (test_auction.AuctionTests.test_monte_carlo_distribution_payments_and_bounds) ... ok
+test_normalization_and_endpoints (test_auction.AuctionTests.test_normalization_and_endpoints) ... ok
+test_scale_invariance_and_linear_price_scaling (test_auction.AuctionTests.test_scale_invariance_and_linear_price_scaling) ... ok
+test_shared_branch_is_free (test_auction.AuctionTests.test_shared_branch_is_free) ... ok
+test_single_bidder_pays_zero (test_auction.AuctionTests.test_single_bidder_pays_zero) ... ok
+test_confidence_miss_ends_allowance_and_does_not_resume (test_continuation.ContinuationTests.test_confidence_miss_ends_allowance_and_does_not_resume) ... ok
+test_settings_reject_ambiguous_thresholds_and_invalid_limits (test_continuation.ContinuationTests.test_settings_reject_ambiguous_thresholds_and_invalid_limits) ... ok
+test_shared_outcomes_and_disabled_mode_grant_nothing (test_continuation.ContinuationTests.test_shared_outcomes_and_disabled_mode_grant_nothing) ... ok
+test_three_free_tokens_then_fresh_auction_required_for_both_sides (test_continuation.ContinuationTests.test_three_free_tokens_then_fresh_auction_required_for_both_sides) ... ok
+test_baseline_ends_on_eos_with_large_safety_limit (test_decoder.DecoderTests.test_baseline_ends_on_eos_with_large_safety_limit) ... ok
+test_cache_matches_uncached_and_suffixes_remain_identical (test_decoder.DecoderTests.test_cache_matches_uncached_and_suffixes_remain_identical) ... ok
+test_cache_probability_guard_detects_corruption (test_decoder.DecoderTests.test_cache_probability_guard_detects_corruption) ... ok
+test_confidence_miss_auctions_the_same_step (test_decoder.DecoderTests.test_confidence_miss_auctions_the_same_step) ... ok
+test_config_rejects_zero_pair_and_unbounded_lengths (test_decoder.DecoderTests.test_config_rejects_zero_pair_and_unbounded_lengths) ... ok
+test_continuation_limit_returns_to_auction_and_carried_eos_reaches_all_caches (test_decoder.DecoderTests.test_continuation_limit_returns_to_auction_and_carried_eos_reaches_all_caches) ... ok
+test_eos_is_fed_to_both_contexts_and_stops_generation (test_decoder.DecoderTests.test_eos_is_fed_to_both_contexts_and_stops_generation) ... ok
+test_full_float64_distributions_are_accepted_by_reference (test_decoder.DecoderTests.test_full_float64_distributions_are_accepted_by_reference) ... ok
+test_generation_passes_96_then_eos_reaches_all_contexts (test_decoder.DecoderTests.test_generation_passes_96_then_eos_reaches_all_contexts) ... ok
+test_length_cap_and_baseline_without_auction (test_decoder.DecoderTests.test_length_cap_and_baseline_without_auction) ... ok
+test_live_runs_only_ad_response_and_keeps_stop_support (test_decoder.DecoderTests.test_live_runs_only_ad_response_and_keeps_stop_support) ... ok
+test_no_ad_observer_matches_full_prefix_without_changing_auction (test_decoder.DecoderTests.test_no_ad_observer_matches_full_prefix_without_changing_auction) ... ok
+test_production_sdpa_cache_matches_uncached (test_decoder.DecoderTests.test_production_sdpa_cache_matches_uncached) ... ok
+test_round_logs_reference_payments_tape_and_checkpoints (test_decoder.DecoderTests.test_round_logs_reference_payments_tape_and_checkpoints) ... ok
+test_stop_before_first_token_has_valid_empty_result (test_decoder.DecoderTests.test_stop_before_first_token_has_valid_empty_result) ... ok
+test_top_table_includes_no_ad_candidates_without_renormalization (test_decoder.DecoderTests.test_top_table_includes_no_ad_candidates_without_renormalization) ... ok
+test_top_table_is_union_and_is_not_renormalized (test_decoder.DecoderTests.test_top_table_is_union_and_is_not_renormalized) ... ok
+test_user_stop_preserves_selected_tokens_charges_and_caches (test_decoder.DecoderTests.test_user_stop_preserves_selected_tokens_charges_and_caches) ... ok
+test_private_brief_edits_leave_the_other_prompt_unchanged (test_decoder.PromptTests.test_private_brief_edits_leave_the_other_prompt_unchanged) ... ok
+test_same_user_task_and_private_facts_in_each_context (test_decoder.PromptTests.test_same_user_task_and_private_facts_in_each_context) ... ok
+test_carried_inspector_distinguishes_actual_output_from_hypothetical_mixture (test_live.LiveContractTests.test_carried_inspector_distinguishes_actual_output_from_hypothetical_mixture) ... ok
+test_continuation_inputs_validate_and_never_enter_prompts (test_live.LiveContractTests.test_continuation_inputs_validate_and_never_enter_prompts) ... ok
+test_every_editable_prompt_field_is_used_but_bids_are_not (test_live.LiveContractTests.test_every_editable_prompt_field_is_used_but_bids_are_not) ... ok
+test_failed_validation_preserves_tokens_and_unlocks_next_run (test_live.LiveContractTests.test_failed_validation_preserves_tokens_and_unlocks_next_run) ... ok
+test_http_rejects_cross_origin_and_busy_requests (test_live.LiveContractTests.test_http_rejects_cross_origin_and_busy_requests) ... 127.0.0.1 - - [14/Oct/2026 12:25:11] "POST /api/live/run HTTP/1.1" 403 -
+127.0.0.1 - - [14/Oct/2026 12:25:11] "POST /api/live/run HTTP/1.1" 202 -
+127.0.0.1 - - [14/Oct/2026 12:25:11] "POST /api/live/run HTTP/1.1" 409 -
+127.0.0.1 - - [14/Oct/2026 12:25:11] "POST /api/live/stop HTTP/1.1" 403 -
+127.0.0.1 - - [14/Oct/2026 12:25:11] "POST /api/live/stop HTTP/1.1" 409 -
+127.0.0.1 - - [14/Oct/2026 12:25:11] "POST /api/live/stop HTTP/1.1" 400 -
+127.0.0.1 - - [14/Oct/2026 12:25:11] "POST /api/live/stop HTTP/1.1" 200 -
+ok
+test_inspection_uses_full_vectors_and_does_not_change_charges (test_live.LiveContractTests.test_inspection_uses_full_vectors_and_does_not_change_charges) ... ok
+test_no_ad_failure_preserves_both_outputs_and_original_ad_result (test_live.LiveContractTests.test_no_ad_failure_preserves_both_outputs_and_original_ad_result) ... ok
+test_no_ad_probabilities_and_delta_stay_fixed_under_preview_bids (test_live.LiveContractTests.test_no_ad_probabilities_and_delta_stay_fixed_under_preview_bids) ... ok
+test_no_ad_prompt_is_independent_of_every_ad_input (test_live.LiveContractTests.test_no_ad_prompt_is_independent_of_every_ad_input) ... ok
+test_one_worker_immutable_snapshot_and_replaced_run_rejected (test_live.LiveContractTests.test_one_worker_immutable_snapshot_and_replaced_run_rejected) ... ok
+test_private_brand_facts_and_objective_edits_do_not_leak_to_rival (test_live.LiveContractTests.test_private_brand_facts_and_objective_edits_do_not_leak_to_rival) ... ok
+test_shared_task_and_instructions_edits_reach_both_contexts (test_live.LiveContractTests.test_shared_task_and_instructions_edits_reach_both_contexts) ... ok
+test_stop_keeps_worker_locked_and_resets_for_next_run (test_live.LiveContractTests.test_stop_keeps_worker_locked_and_resets_for_next_run) ... ok
+test_validation_and_separate_zero_bid_baseline (test_live.LiveContractTests.test_validation_and_separate_zero_bid_baseline) ... ok
+test_archive_keeps_failed_runs_and_original_tokens (test_walkthrough.WalkthroughTests.test_archive_keeps_failed_runs_and_original_tokens) ... ok
+test_browser_counterfactual_matches_python_reference (test_walkthrough.WalkthroughTests.test_browser_counterfactual_matches_python_reference) ... ok
+test_evidence_routes_expose_only_archive_and_named_source (test_walkthrough.WalkthroughTests.test_evidence_routes_expose_only_archive_and_named_source) ... ok
+
+----------------------------------------------------------------------
+Ran 73 tests in 4.657s
+
+OK

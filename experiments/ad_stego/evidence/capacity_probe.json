@@ -1,0 +1,48 @@
+{
+  "mode": "REPLAY_FIXED_PREFIX_CAPACITY_PROBE",
+  "checkpoints": 21,
+  "key_range": [
+    9000,
+    9032
+  ],
+  "message_seed": 71,
+  "numpy": "2.4.6",
+  "sampling_config": {
+    "block_tokens": 64,
+    "max_span_tokens": 32,
+    "max_response_tokens": 4096,
+    "alpha": 0.01
+  },
+  "entropy": {
+    "mixture_entropy_bits": 1.7614608257214848,
+    "candidate_entropy_bits": 1.1287583546998627,
+    "branch_information_bits": 0.6327024710216219
+  },
+  "tilt": {
+    "0.0": {
+      "hit_probability": 0.2278884852570557,
+      "mean_bidder_kl_bits": 0.0,
+      "mixture_tv": 1.405762642560844e-17,
+      "shared_mass": 0.5267904673154181
+    },
+    "2.0": {
+      "hit_probability": 0.39923515109405844,
+      "mean_bidder_kl_bits": 0.25982175660891416,
+      "mixture_tv": 0.17134666583700278,
+      "shared_mass": 0.5203860189711751
+    },
+    "4.0": {
+      "hit_probability": 0.5923966427064054,
+      "mean_bidder_kl_bits": 1.0935470517816808,
+      "mixture_tv": 0.3645081574493497,
+      "shared_mass": 0.522504899607907
+    }
+  },
+  "note": "Unweighted checkpoint averages; entropy is a ceiling, not achievable payload rate. Fixed prefixes do not predict changed future generation.",
+  "example_decoder": {
+    "response_tokens": 300,
+    "hypotheses": 10800,
+    "log2_hypotheses_over_alpha": 20.042599881712917,
+    "green_hits_required": 35
+  }
+}
