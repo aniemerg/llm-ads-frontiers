@@ -31,7 +31,7 @@ function form(){
 
 export async function mountLive(){
   mounted=true;
-  $('#content').innerHTML=`<div class="live-heading"><div><p class="eyebrow">LIVE LAB / LOCAL MODEL INFERENCE</p><h1>One message. <em>Your inputs.</em></h1><p>Qwen3-4B on this Mac. Refresh to generate the ad response and a prompt-only reference, then inspect how the probabilities differ.</p></div><span class="badge live-badge">LIVE MODEL</span></div><div class="live-toolbar"><div id="live-status" role="status" aria-live="polite"><span class="spinner"></span> Connecting to the local model service…</div><div class="controls"><button id="live-new-seed">Next seed</button><button id="live-rerun" class="primary">Refresh inference ↻</button></div></div><div id="live-form"></div><div id="live-notice" role="alert"></div><div id="live-output"></div><div id="live-no-ad"></div><div id="live-inspector"></div><div id="live-provenance"></div>`;
+  $('#content').innerHTML=`<div class="live-heading"><div><p class="eyebrow">LIVE LAB / LOCAL MODEL INFERENCE</p><h1>One message. <em>Your inputs.</em></h1><p>Qwen3-4B on this Mac. Refresh to generate the ad response and a prompt-only reference, then inspect how the probabilities differ.</p></div><span class="badge live-badge">LIVE MODEL</span></div><div class="live-toolbar"><div id="live-status" role="status" aria-live="polite"><span class="spinner"></span> Connecting to the local model service…</div><div class="controls"><button id="live-new-seed">Next seed</button><button id="live-rerun" class="primary">Refresh inference ↻</button></div></div><div id="live-form"></div><div id="live-notice" role="alert"></div><div id="live-output"></div><div id="live-inspector"></div><div id="live-provenance"></div>`;
   $('#live-rerun').addEventListener('click',startRun);
   $('#live-new-seed').addEventListener('click',()=>{
     if(isBusy()||!state.inputs)return;
@@ -157,7 +157,6 @@ function renderStatus(){
 
 function renderOutput(){
   if(!mounted)return;
-  renderNoAd();
   if(!state.events.length){
     $('#live-output').innerHTML=`<section class="panel live-empty"><span class="${isBusy()?'spinner':'empty-glyph'}">${isBusy()?'':'↳'}</span><h2>${state.dirty?'Inputs changed. Ready when you are.':isBusy()?'The model is working':'Your active response appears here'}</h2><p>${state.dirty?'Press Refresh inference to generate from the edited inputs. The previous result was cleared because it is stale.':isBusy()?'Tokens, probabilities, and simulated charges will appear as they are generated.':'Edit the inputs above, then press Refresh inference to run the model.'}</p></section>`;
     $('#live-inspector').innerHTML='';$('#live-provenance').innerHTML='';return;
@@ -179,18 +178,6 @@ function renderOutput(){
     state.follow=false;state.selected=Number(button.dataset.liveToken);inspectionKey='';renderOutput();
   }));
   renderInspector();renderProvenance();
-}
-
-function renderNoAd(){
-  if(!mounted)return;
-  const target=$('#live-no-ad'),n=state.noAd;
-  if(!state.events.length||state.events[0].branch==='baseline'){target.innerHTML='';return;}
-  if(!n||!state.manifest.no_ad_reference){
-    target.innerHTML='<div class="callout">This earlier run has no prompt-only comparison. Press Refresh inference to generate both views.</div>';return;
-  }
-  const latest=n.events.length?n.events[n.events.length-1]:null,r=n.result;
-  const phase=r?'LIVE NO-AD RESULT · CACHE CHECK PASSED':state.status==='error'?'NO-AD COMPARISON INCOMPLETE':'LIVE NO-AD COMPARISON · PENDING';
-  target.innerHTML=`<section class="panel live-response no-ad-response"><div class="replay-head"><h3>Without the ad prompts</h3><span class="badge">${phase}</span></div><p class="small muted">A separate generation from only your user prompt, with its own sampled text and the same seed, temperature, and token cap. No advertiser briefs, objectives, bids, or shared ad instructions. No simulated charges.</p><p class="output-text">${esc(r?r.text:latest?latest.decoded_text_so_far:state.status==='error'?'The no-ad answer did not complete.':'The prompt-only answer will appear after the ad response is validated.')}</p>${latest?`<p class="small muted">${n.events.length} tokens · ${r?`${fmt(r.seconds,2)} s · ${r.stop_reason==='length'?'token cap reached · text truncated':r.stop_reason}`:'generating / validating'}</p>`:''}<p class="small muted">This answer follows its own prefix. The No-ad p column below instead follows the exact ad-generated prefix, so the token distributions are directly comparable.</p>${n.manifest?`${fileLink('no-ad/manifest.json','No-ad manifest')}${fileLink('no-ad/events.jsonl','No-ad token trace')}${r?fileLink('no-ad/result.json','No-ad result'):''}`:''}</section>`;
 }
 
 function renderInspector(){
