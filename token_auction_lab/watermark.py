@@ -16,6 +16,7 @@ from experiments.ad_stego.tokenizer_check import REVISION, QwenTokenizer
 KEY = 1901  # Public research key, not an authentication secret.
 VOCABULARY_SIZE = 151936
 CONFIG = Config()
+MENTION_POLICY = "first-eligible-mention-per-brand-v1"
 EVIDENCE = Path(__file__).resolve().parents[1] / "experiments/ad_stego/evidence"
 PROBABILITY_NOTE = (
     "Coded mixture under the ideal independent random-field model; the finite fixed-key "
@@ -85,13 +86,13 @@ def decode_response(text):
 
 
 class Encoder:
-    """FIFO exact mentions at aligned boundaries; never changes model contexts."""
+    """FIFO first eligible mention per brand; never changes model contexts."""
 
     def __init__(self, brands, tokenizer=None):
         self.tokenizer = tokenizer or get_tokenizer()
         self.brands = tuple(dict.fromkeys(b.strip() for b in brands))
         self.queue, self.records, self.alignment_failures = [], [], []
-        self.seen = set()
+        self.scheduled_brands = set()
         self.active = None
 
     def at_step(self, step, generated, text):
@@ -106,6 +107,8 @@ class Encoder:
             return None
         mentions = []
         for brand in self.brands:
+            if brand in self.scheduled_brands:
+                continue
             for match in re.finditer(r"(?<!\w)" + re.escape(brand) + r"(?!\w)", text):
                 touched = [
                     i
@@ -116,10 +119,12 @@ class Encoder:
                     continue
                 start, end = touched[0], touched[-1] + 1
                 surface = self.tokenizer.decode(encoding.ids[start:end])
-                identity = start, end, surface
-                if end < step and identity not in self.seen:
-                    self.seen.add(identity)
+                if end < step:
+                    # Reserve at enqueue time, including while another brand's
+                    # block is active. Repeated mentions never consume a block.
+                    self.scheduled_brands.add(brand)
                     mentions.append({"start_token": start, "end_token": end, "text": surface})
+                    break
         self.queue.extend(sorted(mentions, key=lambda r: (r["start_token"], r["end_token"])))
         if self.queue:
             span = self.queue.pop(0)
@@ -138,6 +143,7 @@ class Encoder:
     def finish(self, text, visible_ids):
         canonical = self.tokenizer.encode(text)
         return {
+            "mention_policy": MENTION_POLICY,
             "records": [
                 {**r, "complete": r["carrier_end"] <= len(canonical)} for r in self.records
             ],

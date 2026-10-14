@@ -52,9 +52,11 @@ Read the repository's `CODEX_BRIEF.md`, `MECHANISM.md`, and `AGENTS.md` first.
 1. Retain exactly two bidders, one tokenizer, independent prompt/mask/position/KV
    states, fixed bids, and probability sampling. Bids never enter prompts.
 2. Discover exact precommitted brand occurrences on stable final-text prefixes.
-   The current encoder queues all occurrences FIFO at 64-token boundaries and
-   waits at least one token beyond a brand. This scheduling is intentionally
-   simple and wastes short-response capacity.
+   The app queues only the first eligible occurrence per brand FIFO at 64-token
+   boundaries and waits at least one token beyond a brand. Reserve the brand at
+   enqueue time, including while pending, and reset for each response. Repeated
+   mentions do not use additional blocks. Older research runs queued all
+   occurrences; their recordings and text-only decoder remain unchanged.
 3. For an active span, derive its message seed from coordinates and literal span
    text using `tilt_race.message_seed`. Call `tilt_race.sample` with both full
    probability vectors, fixed bids, tape, key, message, and absolute step.

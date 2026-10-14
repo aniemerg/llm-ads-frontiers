@@ -247,10 +247,13 @@ class CachedWatermarkReplayTests(unittest.TestCase):
         self.assertTrue(audit["canonical_roundtrip"])
         self.assertEqual(
             [(r["start_token"], r["end_token"], r["carrier_start"]) for r in audit["records"]],
-            [(91, 94, 128), (165, 168, 192), (196, 200, 256)],
+            [(91, 94, 128), (165, 168, 192)],
         )
-        # The third repeated mention has an unfinished carrier, so only two decode.
-        self.assertFalse(audit["records"][2]["complete"])
+        # The repeated mention no longer starts a third carrier block.
+        self.assertTrue(all(r["complete"] for r in audit["records"]))
+        self.assertIsNone(encoder.active)
+        self.assertFalse(audit["pending_mentions"])
+        self.assertEqual(audit["mention_policy"], wm.MENTION_POLICY)
         self.assertFalse(audit["prefix_alignment_failures"])
         # An observed mismatch disables encoding instead of rebuilding either context.
         encoder.at_step(320, [999], example["text"])
@@ -260,6 +263,22 @@ class CachedWatermarkReplayTests(unittest.TestCase):
         self.assertIsNone(encoder.active)
         partial = encoder.finish(self.tokenizer.decode(ids[:200]), ids[:200])
         self.assertFalse(partial["records"][1]["complete"])
+
+    def test_repeats_do_not_delay_second_brand_or_requeue_pending_brands(self):
+        text = "Paradigm House. Paradigm House. Fort Mason Express." + " Plan" * 200
+        ids = self.tokenizer.encode(text)
+        encoder = wm.Encoder(("Fort Mason Express", "Paradigm House", "Paradigm House"))
+        first = encoder.at_step(64, ids[:64], self.tokenizer.decode(ids[:64]))
+        self.assertEqual(first["text"].strip(), "Paradigm House")
+        self.assertEqual([r["text"].strip() for r in encoder.queue], ["Fort Mason Express"])
+        second = encoder.at_step(128, ids[:128], self.tokenizer.decode(ids[:128]))
+        self.assertEqual(second["text"].strip(), "Fort Mason Express")
+        self.assertFalse(encoder.queue)
+        self.assertIsNone(encoder.at_step(192, ids[:192], self.tokenizer.decode(ids[:192])))
+        self.assertEqual(len(encoder.records), 2)
+        # Each new response gets its own allowance; no cross-run suppression.
+        fresh = wm.Encoder(encoder.brands)
+        self.assertEqual(fresh.at_step(64, ids[:64], self.tokenizer.decode(ids[:64])), first)
 
     def test_limit_never_silently_truncates(self):
         result = wm.decode_response(" hello" * 4097)

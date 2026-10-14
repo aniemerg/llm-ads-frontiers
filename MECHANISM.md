@@ -148,17 +148,22 @@ and unsuccessful completions remain visible and unedited.
 ## Experimental brand watermark (October 14, 2026)
 
 The live app can opt into the research `coordinate-codeword-green4-exp-v1`
-protocol (`tilt-race`). It is disabled by default. Winner continuation can run
+protocol (`tilt-race`). The saved live demo defaults enable it. Winner continuation can run
 alongside it; zero/zero bids cannot use watermark mode. Two private
 advertiser contexts, fixed bids, and exact shared selected IDs are preserved.
 
-The encoder freezes both brand names, recognizes exact word-bounded occurrences,
-then queues their canonical token spans FIFO at aligned 64-token boundaries.
+The encoder freezes both brand names and queues only the first eligible exact
+word-bounded occurrence of each brand, FIFO at aligned 64-token boundaries.
+A brand is reserved when queued, so repeated mentions cannot displace the other
+brand or consume additional blocks. The allowance resets for each response.
 An occurrence must have at least one subsequent token. Each complete later
 64-token block carries one earlier span's coordinates and literal text. On a
 prefix tokenization mismatch the encoder abstains from further encoding; it
 never rebuilds the model contexts. EOS and manual stop can leave incomplete
-records or queued mentions. The final alignment audit records these facts.
+records or queued mentions. A truncated or undecodable block is not retried;
+one encoding attempt per brand does not guarantee successful detection.
+The final alignment audit and manifest record the mention policy. Decoding is
+unchanged and can still recover multiple marked occurrences in older recordings.
 
 Continuation takes precedence: test the current winner’s original probabilities
 after temperature, before watermark adjustment. Up to the configured limit

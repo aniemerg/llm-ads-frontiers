@@ -181,7 +181,15 @@ def run_round(
         }
     encoder = None
     if config.watermark:
-        from token_auction_lab.watermark import Encoder, profile, coded_distributions, sample, mixture_tv, decode_response
+        from token_auction_lab.watermark import (
+            MENTION_POLICY,
+            Encoder,
+            coded_distributions,
+            decode_response,
+            mixture_tv,
+            profile,
+            sample,
+        )
         encoder = Encoder(config.watermark_brands)
         manifest["watermark"] = profile()
         manifest["sampler"] = ("experimental_tilt_race_with_winner_continuation"
@@ -191,7 +199,10 @@ def run_round(
             "Fixed block positions advance on every token; decoding scores all final-text tokens. "
             "Recovery and false positives for the combined mode are not calibrated.")
         manifest["watermark"]["brands"] = list(encoder.brands)
-        manifest["watermark"]["schedule"] = "FIFO exact mentions, aligned 64-token blocks; abstain after alignment failure."
+        manifest["watermark"]["mention_policy"] = MENTION_POLICY
+        manifest["watermark"]["schedule"] = (
+            "FIFO first eligible mention per brand, aligned 64-token blocks; "
+            "no repeated-brand blocks; abstain after alignment failure.")
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     if on_event:
         on_event({"type": "round_start", "manifest": manifest})
