@@ -5,7 +5,7 @@ const fmt = (n,d=4) => Number(n).toFixed(d);
 const probability = p => p===0?'0%':p<.00001?`${(p*100).toExponential(2)}%`:`${fmt(p*100,3)}%`;
 const busyStates = ['loading','prefilling','generating','validating','no-ad-generating','no-ad-validating'];
 const state = {inputs:null,runId:null,status:'connecting',events:[],manifest:null,result:null,error:null,
-  noAd:null,selected:-1,follow:true,cfA:1,cfB:1,page:0,tokenQuery:'',inspect:null,dirty:false,stopRequested:false};
+  noAd:null,selected:-1,follow:true,cfA:1,cfB:1,page:0,tokenQuery:'',inspect:null,dirty:false,stopRequested:false,view:'response'};
 let mounted=false,pollTimer=null,inspectTimer=null,inspectEpoch=0,submitting=false;
 let inspectionKey='',polling=false;
 
@@ -32,7 +32,7 @@ function form(){
 
 export async function mountLive(){
   mounted=true;
-  $('#content').innerHTML=`<div class="live-heading"><div><p class="eyebrow">LIVE LAB / LOCAL MODEL INFERENCE</p><h1>One message. <em>Your inputs.</em></h1><p>Qwen3-4B on this Mac. Each advertiser starts with its own brief and the shared task. Refresh to generate one shared response, then inspect the tokens, probabilities, and charges.</p></div><span class="badge live-badge">LIVE MODEL</span></div><div class="live-toolbar"><div id="live-status" role="status" aria-live="polite"><span class="spinner"></span> Connecting to the local model service…</div><div class="controls"><button id="live-new-seed">Next seed</button><button id="live-rerun" class="primary">Refresh inference ↻</button><button id="live-stop" hidden>Stop generation</button></div></div><div id="live-form"></div><div id="live-notice" role="alert"></div><div id="live-output"></div><div id="live-inspector"></div><div id="live-provenance"></div>`;
+  $('#content').innerHTML=`<div class="live-toolbar"><h1>Ads in LLMs.</h1><div id="live-status" role="status" aria-live="polite"><span class="spinner"></span> Connecting to the local model service…</div><div class="controls"><button id="live-new-seed">Next seed</button><button id="live-rerun" class="primary">Refresh inference ↻</button><button id="live-stop" hidden>Stop generation</button></div></div><div id="live-form"></div><div id="live-notice" role="alert"></div><div id="live-output"></div><div id="live-inspector"></div><div id="live-provenance"></div>`;
   $('#live-rerun').addEventListener('click',startRun);
   $('#live-stop').addEventListener('click',stopRun);
   $('#live-new-seed').addEventListener('click',()=>{
@@ -183,9 +183,19 @@ function renderOutput(){
   const baseline=latest.branch==='baseline';
   const status=state.status==='error'?'FAILED LIVE ATTEMPT':state.result?'LIVE RESULT · CACHE CHECK PASSED':'LIVE GENERATION · VALIDATION PENDING';
   const outputExists=Boolean($('#live-message'));
-  if(!outputExists){$('#live-output').innerHTML=`<section class="panel live-response"><div class="replay-head"><h3 id="live-output-title"></h3><span class="badge live-badge" id="live-output-badge"></span></div><p id="live-message" class="output-text"></p><div class="live-metrics" id="live-metrics"></div><p id="live-rule" class="small muted"></p><div class="section-title"><h3>Inspect any generated token</h3><button id="live-follow">Follow newest token</button></div><div class="token-ribbon" id="live-tokens"></div><div class="legend"><span><i class="dot shared"></i>Shared · free</span><span><i class="dot a"></i>A branch</span><span><i class="dot b"></i>B branch</span><span>↳ = carried token · free</span><span>Labels show selection, not authorship.</span></div><p class="small muted">Original model output, with no text repair. Token labels may show partial words or byte fragments; the message is decoded from the complete ID sequence.</p></section>`;
-    $('#live-follow').addEventListener('click',()=>{state.follow=true;state.selected=state.events.length-1;inspectionKey='';renderOutput();});}
-  $('#live-output-title').textContent=baseline?'No-ad response · both bids are zero':'Ad-influenced response';
+  if(!outputExists){$('#live-output').innerHTML=`<section class="panel live-response"><div class="output-toolbar"><div class="output-tabs" role="tablist" aria-label="Response view"><button id="live-response-tab" role="tab" aria-controls="live-response-view">Ad-influenced response</button><button id="live-tokens-tab" role="tab" aria-controls="live-token-view">Inspect any generated token</button></div><button id="live-copy" class="copy-button" aria-label="Copy ad content to clipboard" title="Copy ad content"><svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="8" y="7" width="12" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h2"/></svg><span>Copy</span></button><span id="live-copy-status" class="small muted" role="status"></span></div><div id="live-response-view" role="tabpanel" aria-labelledby="live-response-tab" tabindex="0"><span class="badge live-badge" id="live-output-badge"></span><p id="live-message" class="output-text"></p></div><div id="live-token-view" role="tabpanel" aria-labelledby="live-tokens-tab" tabindex="0" hidden><div class="token-tools"><button id="live-follow">Follow newest token</button></div><div class="token-ribbon" id="live-tokens"></div><div class="legend"><span><i class="dot shared"></i>Shared · free</span><span><i class="dot a"></i>A branch</span><span><i class="dot b"></i>B branch</span><span>↳ = carried token · free</span></div><p class="small muted">Labels show selection, not authorship. Original model output, with no text repair. Token labels may show partial words or byte fragments.</p></div><div class="live-metrics" id="live-metrics"></div><p id="live-rule" class="small muted"></p></section>`;
+    $('#live-follow').addEventListener('click',()=>{state.follow=true;state.selected=state.events.length-1;inspectionKey='';renderOutput();});
+    $('#live-copy').addEventListener('click',copyResponse);
+    [['response','live-response-tab'],['tokens','live-tokens-tab']].forEach(([view,id])=>{
+      $('#'+id).addEventListener('click',()=>{state.view=view;renderOutput();});
+      $('#'+id).addEventListener('keydown',event=>{
+        if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+        event.preventDefault();state.view=event.key==='Home'?'response':event.key==='End'?'tokens':state.view==='response'?'tokens':'response';
+        renderOutput();$('#'+(state.view==='response'?'live-response-tab':'live-tokens-tab')).focus();
+      });
+    });
+  }
+  $('#live-response-tab').textContent=baseline?'No-ad response':'Ad-influenced response';
   $('#live-output-badge').textContent=status;
   $('#live-message').textContent=latest.decoded_text_so_far||'[No visible text yet]';
   $('#live-metrics').innerHTML=[['Tokens',state.events.length],['Generation',`${fmt(r?r.seconds:latest.elapsed_seconds,2)} s`],['A total charge',fmt(latest.cumulative_a,6)],['B total charge',fmt(latest.cumulative_b,6)],['Stop',r?(({eos:'model ended response',length:'safety limit · truncated',user_stop:'stopped by you · partial'})[r.stop_reason]||r.stop_reason):state.status==='error'?'failed':'in progress']].map(([k,v])=>`<div><span>${k}</span><strong>${esc(v)}</strong></div>`).join('');
@@ -196,7 +206,22 @@ function renderOutput(){
   document.querySelectorAll('[data-live-token]').forEach(button=>button.addEventListener('click',()=>{
     state.follow=false;state.selected=Number(button.dataset.liveToken);inspectionKey='';renderOutput();
   }));
-  renderInspector();renderProvenance();
+  const inspecting=state.view==='tokens';
+  $('#live-response-view').hidden=inspecting;$('#live-token-view').hidden=!inspecting;$('#live-inspector').hidden=!inspecting;
+  [['live-response-tab',!inspecting],['live-tokens-tab',inspecting]].forEach(([id,selected])=>{
+    $('#'+id).setAttribute('aria-selected',String(selected));$('#'+id).tabIndex=selected?0:-1;
+  });
+  $('#live-copy').disabled=!latest.decoded_text_so_far;
+  if(inspecting)renderInspector();renderProvenance();
+}
+
+async function copyResponse(){
+  const text=state.events.length?state.events[state.events.length-1].decoded_text_so_far:'';
+  if(!text)return;
+  const status=$('#live-copy-status');
+  try{await navigator.clipboard.writeText(text);status.textContent='Copied';}
+  catch(error){status.textContent='Copy unavailable. Select the response text to copy.';}
+  setTimeout(()=>{if(status.isConnected)status.textContent='';},2500);
 }
 
 function continuationDecision(e){
