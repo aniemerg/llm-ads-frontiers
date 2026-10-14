@@ -1,6 +1,6 @@
 # Token Auction Lab
 
-A two-bidder token-auction reference and a shared-prefix LLM decoding CLI.
+A two-bidder token-auction reference, shared-prefix LLM decoder, and local web interface.
 Exactly two fictional advertisers use one model and tokenizer, with independent
 prompt contexts and KV caches. Every selected token ID is fed to both contexts.
 Bids stay fixed for a round and never enter either prompt. All charges are
@@ -10,6 +10,57 @@ The mathematical sampler is unchanged from the supplied reference. The decoder
 uses full-vocabulary probabilities at a fixed temperature, without argmax,
 logit averaging, or top-k/top-p filtering. The top-token table is for inspection
 only. See [MECHANISM.md](MECHANISM.md) for the payment derivation and its limits.
+
+## Open the local interface
+
+From this checkout:
+
+```bash
+python -m token_auction_lab.walkthrough
+```
+
+Open **http://127.0.0.1:8765/**. Use `--port 8766` if needed. Stop the server
+with Ctrl-C. The HTTP server uses Python's standard library, binds to loopback,
+and serves the walkthrough, live inference API, and an allowlist of experiment
+evidence. Reading the walkthrough needs no model, tokenizer, GPU, or downloads.
+
+Seven guided chapters explain the question, auction, separate decoder contexts,
+all 21 archived tests, recorded runs, hallucinations, numerical failures, and
+remaining work. Click any recorded token to inspect its probabilities, random
+tape, and payments. The frozen-prefix bid controls preview one alternative
+decision from the recorded residual candidates; they never rewrite the trace or
+generate a new answer. The separate three-token teaching example is labeled
+synthetic. Original manifests, logs, and test sources open from evidence links.
+
+The interface lives in `walkthrough/` and needs no JavaScript build or packages.
+The original smoke report remains an immutable account of the 21-test run;
+the current suite also includes walkthrough and live-service checks below.
+
+### Live Lab
+
+Open **http://127.0.0.1:8765/#live** to edit the shared prompt and instructions,
+both advertisers' brands, facts, objectives and bids, seed, temperature, and
+token cap. Changes mark the result stale. Only **Refresh inference** starts a
+new model run; opening the page or editing a field does not. Inputs are locked
+and a spinner is shown during generation and cache validation.
+
+Live inference requires the inference dependencies below and a locally cached
+`Qwen/Qwen3-4B-Instruct-2507` model and tokenizer at revision
+`cdbee75f17c01a7cc42f958dc650907174af0554`. The smoke command below can populate
+that cache. The web service uses `local_files_only=True`, loads the model on
+the first refresh, and reuses it for subsequent runs. No paid infrastructure or
+wallet is used.
+
+There is one active inference. Inspect each selected token, its probabilities,
+the full vocabulary, random tape, and simulated charges for both advertisers.
+Counterfactual bid controls freeze that token's prefix, distributions, and tape;
+they leave the generated message and its charges unchanged. Setting both main
+bids to zero uses a separate no-ad baseline on the next refresh.
+
+Manifests, traces, results, and failed attempts are saved in
+`artifacts/live-lab/`, which is excluded from Git. Full probability vectors are
+retained in memory for the active run's inspector and replaced on the next run.
+Generated text is displayed without repair, including any hallucinations.
 
 ## Install and test
 
@@ -28,9 +79,16 @@ versions; pip resolves within the ranges in `pyproject.toml`.
 
 The CPU auction reference only needs `pip install -r requirements.txt`.
 Without the inference dependencies, decoder tests are explicitly skipped.
-The complete suite has 21 tests: all 11 original auction tests, a prompt test,
+The complete suite has 30 tests: all 11 original auction tests, a prompt test,
 and nine decoder tests using tiny randomly initialized Qwen models. These
 synthetic models test mechanics and cache correctness, not text quality.
+Three additional walkthrough tests check archived evidence fidelity, the source
+file allowlist, and browser counterfactuals against 312 Python-reference cases.
+The last check uses Node.js and is explicitly skipped when Node is unavailable.
+Six live-service tests cover editable prompts and bid isolation, validation,
+immutable round inputs and concurrency, full-vector inspection, preservation of
+failed attempts, and rejection of cross-origin inference requests. These use
+synthetic fixtures and do not establish model quality.
 
 ## Run a live smoke test
 
@@ -95,9 +153,11 @@ remain in each manifest; archived JSON evidence is under `smoke_results/`.
 
 ## Scope
 
-This is milestone 1 of [CODEX_BRIEF.md](CODEX_BRIEF.md). There is no UI, credit
-reservation ledger, inference service, or blockchain integration. The trace
-fields prepare for later inspection and replay work.
+Milestone 1 of [CODEX_BRIEF.md](CODEX_BRIEF.md) is demonstrated locally. The guided
+walkthrough inspects its evidence, and Live Lab runs editable local inference
+with token inspection and frozen-prefix counterfactuals. A credit reservation
+ledger, broader evaluation sweep, and blockchain integration remain outside the
+implemented scope.
 
 This independent implementation covers a narrow two-bidder construction. It does
 not establish arbitrary-utility truthful bidding, incentives over complete

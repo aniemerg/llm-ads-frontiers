@@ -8,6 +8,7 @@ import time
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Callable
 
 import numpy as np
 import torch
@@ -110,6 +111,8 @@ def run_round(
     metadata: dict,
     *,
     mode: str = "live_model",
+    on_event: Callable[[dict], None] | None = None,
+    on_distributions: Callable[[int, list[np.ndarray]], None] | None = None,
 ) -> dict:
     expected = 1 if config.baseline else 2
     if len(prompts) != expected:
@@ -134,6 +137,8 @@ def run_round(
         "guarantee identical regeneration across software or hardware.",
     }
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    if on_event:
+        on_event({"type": "round_start", "manifest": manifest})
     rng = np.random.default_rng(config.seed)
     device = next(model.parameters()).device
     if device.type == "cuda":
@@ -152,6 +157,8 @@ def run_round(
     with (output / "events.jsonl").open("w") as trace:
         for step in range(config.max_tokens):
             distributions = decoder.distributions(config.temperature)
+            if on_distributions:
+                on_distributions(step, distributions)
             if config.baseline:
                 p = distributions[0]
                 u = float(rng.random())
@@ -159,6 +166,7 @@ def run_round(
                 cdf[-1] = 1.0
                 selected = int(np.searchsorted(cdf, u, side="right"))
                 event = {"branch": "baseline", "uniform": u, "payment_a": 0.0, "payment_b": 0.0}
+                event["selected_probabilities"] = {"p": float(p[selected])}
             else:
                 p_a, p_b = distributions
                 auction = TwoBidderAuction(p_a, p_b)
@@ -184,6 +192,17 @@ def run_round(
                     "threshold_a": config.bid_b * tape.contest / (1 - tape.contest),
                     "threshold_b": config.bid_a * (1 - tape.contest) / tape.contest,
                     "top_tokens": top_tokens(tokenizer, p_a, p_b, q, config.top_k),
+                    "selected_probabilities": {
+                        "p_a": float(p_a[selected]),
+                        "p_b": float(p_b[selected]),
+                        "q": float(q[selected]),
+                    },
+                    "candidate_a_text": None if allocation.candidate_a is None else tokenizer.decode(
+                        [allocation.candidate_a], clean_up_tokenization_spaces=False
+                    ),
+                    "candidate_b_text": None if allocation.candidate_b is None else tokenizer.decode(
+                        [allocation.candidate_b], clean_up_tokenization_spaces=False
+                    ),
                 }
                 if step in config.checkpoint_steps:
                     filename = f"checkpoint-{step:03}.npz"
@@ -213,6 +232,7 @@ def run_round(
                     "mode": mode,
                     "step": step,
                     "token_id": selected,
+                    "token_text": tokenizer.decode([selected], clean_up_tokenization_spaces=False),
                     "decoded_text_so_far": text,
                     "cumulative_a": cumulative_a,
                     "cumulative_b": cumulative_b,
@@ -221,6 +241,8 @@ def run_round(
             )
             trace.write(json.dumps(event, ensure_ascii=False, allow_nan=False) + "\n")
             trace.flush()
+            if on_event:
+                on_event(event)
             if selected in eos_ids(model, tokenizer):
                 stop_reason = "eos"
                 break
@@ -237,6 +259,8 @@ def run_round(
             atol = 3e-4
         max_probability_tv = 1e-4 if dtype == torch.float32 else None
         validation_started = time.perf_counter()
+        if on_event:
+            on_event({"type": "validation_start", "round_id": output.name})
         errors = decoder.check_cache(
             atol=atol,
             rtol=rtol,
@@ -278,4 +302,6 @@ def run_round(
         }
         trace.write(json.dumps(result, ensure_ascii=False, allow_nan=False) + "\n")
     (output / "result.json").write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n")
+    if on_event:
+        on_event(result)
     return result
