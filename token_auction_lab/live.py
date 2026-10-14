@@ -7,6 +7,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 import hashlib
 from importlib.metadata import distributions
+from importlib.resources import files
 import json
 import math
 from pathlib import Path
@@ -18,7 +19,7 @@ import uuid
 MODEL = "Qwen/Qwen3-4B-Instruct-2507"
 REVISION = "cdbee75f17c01a7cc42f958dc650907174af0554"
 ROOT = Path(__file__).resolve().parents[1]
-BUSY = {"loading", "prefilling", "generating", "validating"}
+BUSY = {"loading", "prefilling", "generating", "validating", "no-ad-generating", "no-ad-validating"}
 
 
 class BusyError(Exception):
@@ -89,18 +90,7 @@ class LiveRequest:
 
 
 def default_inputs():
-    from token_auction_lab.prompts import RULES, scenarios
-    scenario = scenarios()["transit-hotel"]
-    return {
-        "prompt": scenario["task"], "instructions": RULES,
-        "advertisers": [{
-            "brand": ad["brand"], "facts": "\n".join(ad["facts"]), "bid": 1,
-            "objective": f"Naturally recommend {ad['brand']}. Make its relevant benefits salient "
-            "while satisfying the user's task. Mention the other advertiser only when useful "
-            "for a coherent message.",
-        } for ad in scenario["advertisers"]],
-        "seed": 7, "temperature": .8, "max_tokens": 96,
-    }
+    return json.loads(files("token_auction_lab").joinpath("live_defaults.json").read_text())
 
 
 def live_messages(request: LiveRequest, advertiser: int | None):
@@ -108,8 +98,8 @@ def live_messages(request: LiveRequest, advertiser: int | None):
     if advertiser not in (None, 0, 1):
         raise ValueError("Exactly two advertisers are supported.")
     if advertiser is None:
-        system = request.instructions + "\n\nThere is no sponsor or advertiser objective. " \
-            "Answer the user's request without advertisements. Do not invent local facts."
+        # The reference is the unmodified user prompt, with no ad-related system text.
+        return [{"role": "user", "content": request.prompt}]
     else:
         facts = "\n\n".join(f"{ad.brand}:\n{ad.facts}" for ad in request.advertisers)
         ad = request.advertisers[advertiser]
@@ -157,9 +147,10 @@ class InferenceEngine:
             "local_files_only": True, "torch_num_threads": torch.get_num_threads(),
             "eos_token_ids": self.model.generation_config.eos_token_id,
             "sampling_filters": None, "scenario": "editable-live-inputs",
-            "timing_note": "Generation includes prefill, both sequential context forwards, "
+            "timing_note": "Ad generation includes prefill, both bidder forwards and the no-ad observer forward, "
                 "sampling, full-vector retention for the active inspector, trace I/O, and "
-                "synchronization. Cache validation and initial model load are separate.",
+                "synchronization. The independent no-ad answer has its own timing. "
+                "Cache validation and initial model load are separate.",
         }
 
     def decode(self, token_id):
@@ -171,7 +162,7 @@ class InferenceEngine:
 
         torch.manual_seed(request.seed)
         prompts = []
-        for i in ([None] if request.baseline else [0, 1]):
+        for i in ([None] if request.baseline else [0, 1, None]):
             text = self.tokenizer.apply_chat_template(
                 live_messages(request, i), tokenize=False, add_generation_prompt=True
             )
@@ -191,12 +182,30 @@ class InferenceEngine:
             seed=request.seed, temperature=request.temperature, max_tokens=request.max_tokens,
             baseline=request.baseline,
         )
-        return run_round(self.model, self.tokenizer, prompts, config, output, metadata,
-            on_event=on_event, on_distributions=on_distributions)
+        metadata["no_ad_prompt_policy"] = "Only the user message; excludes shared ad instructions, briefs, objectives, and bids."
+        if request.baseline:
+            return run_round(self.model, self.tokenizer, prompts, config, output, metadata,
+                on_event=on_event, on_distributions=on_distributions)
+        no_ad_prompt = prompts.pop()
+        result = run_round(self.model, self.tokenizer, prompts, config, output, metadata,
+            on_event=on_event, on_distributions=on_distributions, no_ad_prompt=no_ad_prompt)
+
+        def emit_no_ad(event):
+            on_event({"type": "no_ad_event", "event": event})
+
+        # An independent RNG and its own generated prefix. This does not change the auction tape.
+        no_ad_result = run_round(self.model, self.tokenizer, [no_ad_prompt],
+            RoundConfig(0, 0, seed=request.seed, temperature=request.temperature,
+                max_tokens=request.max_tokens, baseline=True),
+            output / "no-ad", {**metadata, "comparison_parent": output.name},
+            on_event=emit_no_ad)
+        result["no_ad_result"] = no_ad_result
+        (output / "result.json").write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n")
+        return result
 
 
 class LiveService:
-    """One active input snapshot, one worker, and no comparison/history API."""
+    """One active input snapshot and worker, with an accompanying no-ad reference."""
 
     def __init__(self, output_root=None, engine=None):
         self.output_root = output_root or ROOT / "artifacts/live-lab"
@@ -216,6 +225,7 @@ class LiveService:
                 "run_id": run_id, "status": "loading", "inputs": asdict(request),
                 "events": [], "vectors": {}, "manifest": None, "result": None,
                 "error": None, "created_at": datetime.now(timezone.utc).isoformat(),
+                "no_ad": {"events": [], "manifest": None, "result": None},
             }
             self.worker = threading.Thread(target=self._run, args=(request, run_id), daemon=True)
             self.worker.start()
@@ -243,8 +253,21 @@ class LiveService:
                     elif event["type"] == "token":
                         self.current["status"] = "generating"
                         self.current["events"].append(deepcopy(event))
+                    elif event["type"] == "round_end":
+                        self.current["result"] = deepcopy(event)
                     elif event["type"] == "validation_start":
                         self.current["status"] = "validating"
+                    elif event["type"] == "no_ad_event":
+                        e = event["event"]
+                        if e["type"] == "round_start":
+                            self.current["status"] = "no-ad-generating"
+                            self.current["no_ad"]["manifest"] = deepcopy(e["manifest"])
+                        elif e["type"] == "token":
+                            self.current["no_ad"]["events"].append(deepcopy(e))
+                        elif e["type"] == "validation_start":
+                            self.current["status"] = "no-ad-validating"
+                        elif e["type"] == "round_end":
+                            self.current["no_ad"]["result"] = deepcopy(e)
 
             result = self.engine.run(request, output, emit, retain)
             with self.lock:
@@ -295,9 +318,11 @@ class LiveService:
         else:
             a = event["bid_a"] if a is None else numeric(a, "Counterfactual A bid", 0, 1000)
             b = event["bid_b"] if b is None else numeric(b, "Counterfactual B bid", 0, 1000)
-            auction = TwoBidderAuction(*vectors)
+            auction = TwoBidderAuction(*vectors[:2])
             q = auction.mixture(a, b)
             outcome = asdict(auction.resolve(a, b, RandomTape(**event["tape"])))
+        p_no_ad = vectors[2] if not baseline and len(vectors) == 3 else None
+        actual_q = q if baseline else auction.mixture(event["bid_a"], event["bid_b"])
         if token_id is not None:
             if not 0 <= token_id < len(q):
                 raise ValueError(f"Token ID must be between 0 and {len(q)-1}.")
@@ -311,6 +336,9 @@ class LiveService:
                 value["p"] = float(vectors[0][i])
             else:
                 value.update(p_a=float(vectors[0][i]), p_b=float(vectors[1][i]))
+                if p_no_ad is not None:
+                    value.update(p_no_ad=float(p_no_ad[i]),
+                        delta_q_no_ad=float(actual_q[i] - p_no_ad[i]))
             return value
 
         # Always show selected and residual candidates, including outside the top rows.
@@ -322,13 +350,21 @@ class LiveService:
             "outcome": {**outcome, "token": self.engine.decode(outcome["token_id"])},
             "bid_a": a, "bid_b": b,
             "counterfactual": not baseline and (a != event["bid_a"] or b != event["bid_b"]),
+            "no_ad_comparison": None if p_no_ad is None else {
+                "conditioning": "Same auction-selected prefix; only the user prompt in the reference context.",
+                "tv_a": float(np.abs(vectors[0] - p_no_ad).sum() / 2),
+                "tv_b": float(np.abs(vectors[1] - p_no_ad).sum() / 2),
+                "tv_q": float(np.abs(actual_q - p_no_ad).sum() / 2),
+                "tv_preview": float(np.abs(q - p_no_ad).sum() / 2),
+            },
         }
 
     def file(self, run_id, name):
         with self.lock:
             if not self.current or self.current["run_id"] != run_id:
                 raise StaleRunError("Only the active run is available here.")
-        if name not in {"manifest.json", "events.jsonl", "result.json", "error.json"}:
+        if name not in {"manifest.json", "events.jsonl", "result.json", "error.json",
+                "no-ad/manifest.json", "no-ad/events.jsonl", "no-ad/result.json"}:
             raise ValueError("Unknown run file.")
         path = self.output_root / run_id / name
         if not path.is_file():

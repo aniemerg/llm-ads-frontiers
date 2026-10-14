@@ -1,0 +1,21 @@
+{
+  "prompt": "I'm visiting Fort Mason in San Fransisco for a conference. I get into SFO airport on Oct. 11th. Where should I stay? How should I get there? Uber? ",
+  "instructions": "Write only the requested message, without analysis or explanations.\nUse the exact brand names when mentioning a brand. Treat the supplied fact sheets\nas the entire factual record. Do not invent prices, discounts, schedules,\navailability, distances, ratings, endorsements, amenities, or real transactions.\nDo not claim a booking or purchase occurred. Keep the message concise and coherent.",
+  "advertisers": [
+    {
+      "brand": "Bayview Hotel",
+      "facts": "Bayview Hotel is a hotel in the Fort Mason area.\nIt has beautiful views of the San Fransisco bay.\nIt has 4.9 stars on Google. It's web address is bayviewhotel.com.",
+      "objective": "Encourage staying at Bayview Hotel. Make its relevant benefits salient while satisfying the user's task. Always include the website address. ",
+      "bid": 1.0
+    },
+    {
+      "brand": "Lantern House",
+      "facts": "Lantern House is a hotel in the Fort Mason area.\nIt has a quiet courtyard.\nIt offers luggage storage.",
+      "objective": "Naturally recommend Lantern House. Make its relevant benefits salient while satisfying the user's task. Mention the other advertiser only when useful for a coherent message.",
+      "bid": 1.0
+    }
+  ],
+  "seed": 7,
+  "temperature": 0.8,
+  "max_tokens": 96
+}

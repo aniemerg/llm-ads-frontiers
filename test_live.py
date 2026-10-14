@@ -22,10 +22,12 @@ from token_auction_lab.walkthrough import Handler
 
 class HeldEngine:
     """Synthetic fixture: hold one worker until the test permits completion."""
-    def __init__(self, fail=False):
+    def __init__(self, fail=False, reference=False, fail_no_ad=False):
         self.release = threading.Event()
         self.started = threading.Event()
         self.fail = fail
+        self.reference = reference
+        self.fail_no_ad = fail_no_ad
         self.requests = []
 
     def load(self):
@@ -46,11 +48,21 @@ class HeldEngine:
         event = {**asdict(allocation), "type": "token", "step": 0, "tape": asdict(tape),
             "bid_a": request.advertisers[0].bid, "bid_b": request.advertisers[1].bid}
         emit({"type": "round_start", "manifest": {"mode": "synthetic_fixture"}})
-        retain(0, [p_a, p_b])
+        retain(0, [p_a, p_b] + ([np.array([.2, .7, .1])] if self.reference else []))
         emit(event)
         emit({"type": "validation_start"})
         if self.fail:
             raise AssertionError("deliberately failed cache check")
+        if self.reference:
+            emit({"type": "round_end", "mode": "synthetic_fixture", "text": "ad result"})
+            emit({"type": "no_ad_event", "event": {"type": "round_start", "manifest": {
+                "mode": "synthetic_fixture", "prompts": [{"text": "user prompt only"}]}}})
+            emit({"type": "no_ad_event", "event": {"type": "token", "step": 0,
+                "token_id": 1, "decoded_text_so_far": "weekend", "payment_a": 0, "payment_b": 0}})
+            if self.fail_no_ad:
+                raise AssertionError("deliberately failed no-ad cache check")
+            emit({"type": "no_ad_event", "event": {"type": "round_end",
+                "text": "weekend", "mode": "synthetic_fixture", "payment_a": 0, "payment_b": 0}})
         return {"text": self.decode(allocation.token_id), "mode": "synthetic_fixture"}
 
 
@@ -96,8 +108,54 @@ class LiveContractTests(unittest.TestCase):
         request = LiveRequest.parse(payload)
         self.assertTrue(request.baseline)
         baseline = live_messages(request, None)
-        self.assertEqual(len(baseline), 2)
+        self.assertEqual(baseline, [{"role": "user", "content": request.prompt}])
         self.assertNotIn(request.advertisers[0].facts, baseline[0]["content"])
+
+    def test_no_ad_prompt_is_independent_of_every_ad_input(self):
+        payload = default_inputs()
+        original = live_messages(LiveRequest.parse(payload), None)
+        payload["instructions"] = "AD INSTRUCTIONS SENTINEL"
+        for i, ad in enumerate(payload["advertisers"]):
+            ad.update(brand=f"BRAND {i}", facts="FACT SENTINEL", objective="OBJECTIVE SENTINEL", bid=99)
+        self.assertEqual(live_messages(LiveRequest.parse(payload), None), original)
+        self.assertEqual(default_inputs()["advertisers"][0]["brand"], "Bayview Hotel")
+        self.assertIn("Fort Mason", default_inputs()["prompt"])
+
+    def test_no_ad_probabilities_and_delta_stay_fixed_under_preview_bids(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            engine = HeldEngine(reference=True)
+            engine.release.set()
+            service = LiveService(Path(tmp), engine)
+            run_id = service.start(default_inputs())
+            service.worker.join(2)
+            original = service.inspect(run_id, 0, token_id=0)
+            preview = service.inspect(run_id, 0, token_id=0, a=3, b=1)
+            self.assertAlmostEqual(original["rows"][0]["p_no_ad"], .2)
+            self.assertAlmostEqual(original["rows"][0]["delta_q_no_ad"], .15)
+            self.assertAlmostEqual(original["no_ad_comparison"]["tv_q"], .4)
+            self.assertAlmostEqual(preview["rows"][0]["q"], .475)
+            self.assertEqual(preview["rows"][0]["p_no_ad"], original["rows"][0]["p_no_ad"])
+            self.assertEqual(preview["rows"][0]["delta_q_no_ad"], original["rows"][0]["delta_q_no_ad"])
+            self.assertEqual(preview["no_ad_comparison"]["tv_q"], original["no_ad_comparison"]["tv_q"])
+            snapshot = service.snapshot()
+            self.assertEqual(snapshot["status"], "complete")
+            self.assertEqual(snapshot["no_ad"]["result"]["text"], "weekend")
+            self.assertEqual(snapshot["no_ad"]["events"][0]["payment_a"], 0)
+
+    def test_no_ad_failure_preserves_both_outputs_and_original_ad_result(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            engine = HeldEngine(reference=True, fail_no_ad=True)
+            engine.release.set()
+            service = LiveService(Path(tmp), engine)
+            service.start(default_inputs())
+            service.worker.join(2)
+            snapshot = service.snapshot()
+            self.assertEqual(snapshot["status"], "error")
+            self.assertEqual(snapshot["result"]["text"], "ad result")
+            self.assertEqual(len(snapshot["events"]), 1)
+            self.assertEqual(snapshot["no_ad"]["events"][0]["decoded_text_so_far"], "weekend")
+            self.assertIsNone(snapshot["no_ad"]["result"])
+            self.assertIn("no-ad cache", snapshot["error"])
 
     def test_one_worker_immutable_snapshot_and_replaced_run_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:

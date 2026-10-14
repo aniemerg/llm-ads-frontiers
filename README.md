@@ -43,6 +43,8 @@ both advertisers' brands, facts, objectives and bids, seed, temperature, and
 token cap. Changes mark the result stale. Only **Refresh inference** starts a
 new model run; opening the page or editing a field does not. Inputs are locked
 and a spinner is shown during generation and cache validation.
+The saved defaults use the Fort Mason conference prompt, Bayview Hotel, and
+Lantern House from the captured user run.
 
 Live inference requires the inference dependencies below and a locally cached
 `Qwen/Qwen3-4B-Instruct-2507` model and tokenizer at revision
@@ -51,16 +53,35 @@ that cache. The web service uses `local_files_only=True`, loads the model on
 the first refresh, and reuses it for subsequent runs. No paid infrastructure or
 wallet is used.
 
-There is one active inference. Inspect each selected token, its probabilities,
-the full vocabulary, random tape, and simulated charges for both advertisers.
+There is one active set of inputs. Each refresh generates the ad response and
+a separate prompt-only answer using the same model, tokenizer, seed, temperature,
+and token cap. The no-ad prompt contains only the user's message: shared ad
+instructions, advertiser facts, objectives, and bids are excluded. This also
+removes any general constraints in those shared instructions; it is a reference
+to the unconditioned user request, not an estimate of just the objective's effect.
+
+Inspect each ad-selected token, the full vocabulary, random tape, and simulated
+charges for both advertisers. **Ad mixture q** is the bid-weighted probability
+distribution actually sampled by the auction; it is not the no-ad baseline.
+**No-ad p** comes from an independent context that receives the same exact
+auction-selected token IDs. The inspector compares distributions at that fixed
+prefix, including percentage-point changes and full-vocabulary total variation.
+The prefix can already contain ad content. This observer does not bid, sample,
+or change the two-bidder mechanism. Its cache is separately validated.
+
+The separate no-ad answer follows its own sampled prefix and never incurs
+advertiser charges. Its text is useful for comparing whole responses, while the
+observer is needed for comparing next-token probabilities at the same prefix.
 Counterfactual bid controls freeze that token's prefix, distributions, and tape;
 they leave the generated message and its charges unchanged. Setting both main
-bids to zero uses a separate no-ad baseline on the next refresh.
+bids to zero generates only the prompt-only answer on the next refresh.
 
 Manifests, traces, results, and failed attempts are saved in
 `artifacts/live-lab/`, which is excluded from Git. Full probability vectors are
 retained in memory for the active run's inspector and replaced on the next run.
 Generated text is displayed without repair, including any hallucinations.
+The separate no-ad manifest, trace, and result are saved in the run's `no-ad/`
+directory. Main-run checkpoints include `p_no_ad` for the shared-prefix observer.
 
 ## Install and test
 
@@ -79,16 +100,19 @@ versions; pip resolves within the ranges in `pyproject.toml`.
 
 The CPU auction reference only needs `pip install -r requirements.txt`.
 Without the inference dependencies, decoder tests are explicitly skipped.
-The complete suite has 30 tests: all 11 original auction tests, a prompt test,
-and nine decoder tests using tiny randomly initialized Qwen models. These
+The complete suite has 35 tests: all 11 original auction tests, a prompt test,
+and eleven decoder tests using tiny randomly initialized Qwen models. These
 synthetic models test mechanics and cache correctness, not text quality.
 Three additional walkthrough tests check archived evidence fidelity, the source
 file allowlist, and browser counterfactuals against 312 Python-reference cases.
 The last check uses Node.js and is explicitly skipped when Node is unavailable.
-Six live-service tests cover editable prompts and bid isolation, validation,
+Nine live-service tests cover editable prompts and bid isolation, validation,
 immutable round inputs and concurrency, full-vector inspection, preservation of
 failed attempts, and rejection of cross-origin inference requests. These use
 synthetic fixtures and do not establish model quality.
+The new checks verify that the no-ad observer matches a full-prefix forward,
+leaves auction tokens/tapes/payments unchanged, includes no-ad candidates in the
+display table, and preserves both outputs if the independent answer fails.
 
 ## Run a live smoke test
 

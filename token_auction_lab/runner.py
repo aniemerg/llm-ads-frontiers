@@ -77,9 +77,9 @@ def memory_snapshot(device: torch.device, sampled_mps_peak: int) -> dict:
     return memory
 
 
-def top_tokens(tokenizer, p_a, p_b, q, k: int) -> list[dict]:
+def top_tokens(tokenizer, p_a, p_b, q, k: int, p_no_ad=None) -> list[dict]:
     ids: set[int] = set()
-    for p in (p_a, p_b, q):
+    for p in ((p_a, p_b, q) if p_no_ad is None else (p_a, p_b, q, p_no_ad)):
         count = min(k, len(p))
         ids.update(int(i) for i in np.argpartition(p, -count)[-count:])
     return [
@@ -89,6 +89,8 @@ def top_tokens(tokenizer, p_a, p_b, q, k: int) -> list[dict]:
             "p_a": float(p_a[i]),
             "p_b": float(p_b[i]),
             "q": float(q[i]),
+            **({"p_no_ad": float(p_no_ad[i]), "delta_q_no_ad": float(q[i] - p_no_ad[i])}
+               if p_no_ad is not None else {}),
         }
         for i in sorted(ids, key=lambda i: (-q[i], i))
     ]
@@ -113,10 +115,13 @@ def run_round(
     mode: str = "live_model",
     on_event: Callable[[dict], None] | None = None,
     on_distributions: Callable[[int, list[np.ndarray]], None] | None = None,
+    no_ad_prompt: tuple[str, list[int]] | None = None,
 ) -> dict:
     expected = 1 if config.baseline else 2
     if len(prompts) != expected:
         raise ValueError(f"Expected {expected} prompt contexts.")
+    if config.baseline and no_ad_prompt is not None:
+        raise ValueError("A baseline round cannot also have a no-ad reference observer.")
     output.mkdir(parents=True, exist_ok=False)
     mode = "live_baseline" if config.baseline and mode == "live_model" else mode
     manifest = {
@@ -136,6 +141,14 @@ def run_round(
         "replay_note": "Recorded tokens replay without inference. A seed alone does not "
         "guarantee identical regeneration across software or hardware.",
     }
+    if no_ad_prompt is not None:
+        reference_text, reference_ids = no_ad_prompt
+        manifest["no_ad_reference"] = {
+            "text": reference_text, "sha256": prompt_hash(reference_text),
+            "token_ids": reference_ids,
+            "conditioning": "User prompt only, followed by the exact auction-selected token IDs.",
+            "role": "Read-only probability observer; no bid, sampling, or payment.",
+        }
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     if on_event:
         on_event({"type": "round_start", "manifest": manifest})
@@ -146,6 +159,7 @@ def run_round(
     synchronize(device)
     started = time.perf_counter()
     decoder = SharedPrefixDecoder(model, [ids for _, ids in prompts])
+    reference = SharedPrefixDecoder(model, [no_ad_prompt[1]]) if no_ad_prompt else None
     synchronize(device)
     prefilled = time.perf_counter()
     sampled_mps_peak = torch.mps.current_allocated_memory() if device.type == "mps" else 0
@@ -157,8 +171,9 @@ def run_round(
     with (output / "events.jsonl").open("w") as trace:
         for step in range(config.max_tokens):
             distributions = decoder.distributions(config.temperature)
+            p_no_ad = reference.distributions(config.temperature)[0] if reference else None
             if on_distributions:
-                on_distributions(step, distributions)
+                on_distributions(step, distributions + ([p_no_ad] if reference else []))
             if config.baseline:
                 p = distributions[0]
                 u = float(rng.random())
@@ -191,7 +206,7 @@ def run_round(
                     "tape": asdict(tape),
                     "threshold_a": config.bid_b * tape.contest / (1 - tape.contest),
                     "threshold_b": config.bid_a * (1 - tape.contest) / tape.contest,
-                    "top_tokens": top_tokens(tokenizer, p_a, p_b, q, config.top_k),
+                    "top_tokens": top_tokens(tokenizer, p_a, p_b, q, config.top_k, p_no_ad),
                     "selected_probabilities": {
                         "p_a": float(p_a[selected]),
                         "p_b": float(p_b[selected]),
@@ -204,6 +219,16 @@ def run_round(
                         [allocation.candidate_b], clean_up_tokenization_spaces=False
                     ),
                 }
+                if reference:
+                    event["selected_probabilities"].update(
+                        p_no_ad=float(p_no_ad[selected]),
+                        delta_q_no_ad=float(q[selected] - p_no_ad[selected]),
+                    )
+                    event["no_ad_comparison"] = {
+                        "tv_a": float(np.abs(p_a - p_no_ad).sum() / 2),
+                        "tv_b": float(np.abs(p_b - p_no_ad).sum() / 2),
+                        "tv_q": float(np.abs(q - p_no_ad).sum() / 2),
+                    }
                 if step in config.checkpoint_steps:
                     filename = f"checkpoint-{step:03}.npz"
                     np.savez_compressed(
@@ -211,9 +236,14 @@ def run_round(
                         p_a=p_a,
                         p_b=p_b,
                         prefix=np.array(decoder.generated, dtype=np.int64),
+                        **({"p_no_ad": p_no_ad} if reference else {}),
                     )
                     event["checkpoint"] = filename
             decoder.advance(selected)
+            if reference:
+                reference.advance(selected)
+                if reference.generated != decoder.generated:
+                    raise RuntimeError("The no-ad observer must follow the exact auction prefix.")
             # Decode the entire shared sequence, not individual token strings:
             # byte-fallback/UTF-8 pieces can combine across token boundaries.
             text = tokenizer.decode(
@@ -267,6 +297,17 @@ def run_round(
             temperature=config.temperature,
             max_probability_tv=max_probability_tv,
         )
+        reference_validation = None
+        if reference:
+            reference_errors = reference.check_cache(
+                atol=atol, rtol=rtol, temperature=config.temperature,
+                max_probability_tv=max_probability_tv,
+            )
+            reference_validation = {
+                "shared_suffix_verified": reference.generated == decoder.generated,
+                "cache_max_absolute_errors": reference_errors,
+                "cache_probability_tvs": reference.cache_probability_tvs,
+            }
         synchronize(device)
         validation_seconds = time.perf_counter() - validation_started
         count = len(decoder.generated)
@@ -300,6 +341,8 @@ def run_round(
             "cache_validation_seconds": validation_seconds,
             "memory": memory,
         }
+        if reference_validation is not None:
+            result["no_ad_reference_validation"] = reference_validation
         trace.write(json.dumps(result, ensure_ascii=False, allow_nan=False) + "\n")
     (output / "result.json").write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n")
     if on_event:

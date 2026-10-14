@@ -195,6 +195,58 @@ class DecoderTests(unittest.TestCase):
                 RoundConfig(**kwargs)
         self.assertTrue(RoundConfig(0, 0, baseline=True).baseline)
 
+    def test_no_ad_observer_matches_full_prefix_without_changing_auction(self):
+        self.model.generation_config.eos_token_id = None
+        tokenizer = TestTokenizer()
+        tokenizer.eos_token_id = None
+        prompts = [("A", [1, 2]), ("B", [3, 4, 5])]
+        reference_ids = [7, 8, 9, 10]
+        captured = []
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            plain = run_round(self.model, tokenizer, prompts, RoundConfig(max_tokens=4),
+                root / "plain", {}, mode="synthetic_model_test")
+            compared = run_round(self.model, tokenizer, prompts, RoundConfig(max_tokens=4),
+                root / "compared", {}, mode="synthetic_model_test",
+                no_ad_prompt=("User only", reference_ids),
+                on_distributions=lambda step, vectors: captured.append(vectors))
+            self.assertEqual(plain["token_ids"], compared["token_ids"])
+            self.assertEqual(plain["payment_a"], compared["payment_a"])
+            self.assertEqual(plain["payment_b"], compared["payment_b"])
+            self.assertEqual(len(compared["cache_max_absolute_errors"]), 2)
+            self.assertTrue(compared["no_ad_reference_validation"]["shared_suffix_verified"])
+            original = [json.loads(line) for line in (root / "plain/events.jsonl").read_text().splitlines()][:-1]
+            events = [json.loads(line) for line in (root / "compared/events.jsonl").read_text().splitlines()][:-1]
+            for step, (vectors, event) in enumerate(zip(captured, events)):
+                self.assertEqual(len(vectors), 3)
+                self.assertEqual(event["tape"], original[step]["tape"])
+                self.assertEqual(event["branch"], original[step]["branch"])
+                self.assertEqual(event["candidate_a"], original[step]["candidate_a"])
+                self.assertEqual(event["candidate_b"], original[step]["candidate_b"])
+                ids = torch.tensor([reference_ids + compared["token_ids"][:step]])
+                with torch.inference_mode():
+                    logits = self.model(input_ids=ids, use_cache=False).logits[0, -1]
+                expected = probabilities(logits, .8)
+                np.testing.assert_allclose(vectors[2], expected, rtol=2e-6, atol=1e-8)
+                selected = event["token_id"]
+                self.assertAlmostEqual(event["selected_probabilities"]["p_no_ad"], vectors[2][selected])
+                self.assertAlmostEqual(event["no_ad_comparison"]["tv_q"],
+                    float(np.abs((vectors[0]+vectors[1])/2 - vectors[2]).sum()/2))
+            with np.load(root / "compared/checkpoint-000.npz", allow_pickle=False) as checkpoint:
+                np.testing.assert_array_equal(checkpoint["p_no_ad"], captured[0][2])
+            manifest = json.loads((root / "compared/manifest.json").read_text())
+            self.assertEqual(manifest["no_ad_reference"]["token_ids"], reference_ids)
+
+    def test_top_table_includes_no_ad_candidates_without_renormalization(self):
+        a = np.array([.8, .1, .1])
+        b = np.array([.1, .1, .8])
+        p_no_ad = np.array([.1, .8, .1])
+        rows = top_tokens(TestTokenizer(), a, b, (a+b)/2, 1, p_no_ad)
+        self.assertEqual({row["token_id"] for row in rows}, {0, 1, 2})
+        middle = next(row for row in rows if row["token_id"] == 1)
+        self.assertAlmostEqual(middle["p_no_ad"], .8)
+        self.assertAlmostEqual(middle["delta_q_no_ad"], -.7)
+
 
 if __name__ == "__main__":
     unittest.main()
