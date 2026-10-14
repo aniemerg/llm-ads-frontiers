@@ -1,0 +1,26 @@
+{
+  "20261013T235956Z-transit-hotel-a1-b0-seed7-57c3e6/checkpoint-000.npz": {
+    "bytes": 1617658,
+    "sha256": "46ea9a9f5aa9c3afde211f823246c00b5e473c35315bbf4689d723c08fc2a3f0"
+  },
+  "20261013T235956Z-transit-hotel-a1-b0-seed7-57c3e6/checkpoint-024.npz": {
+    "bytes": 1527700,
+    "sha256": "7a2d130a1ad0c77a5654ea41fa2f844d71f72cceac943e502b3de94e4e27da61"
+  },
+  "20261013T235956Z-transit-hotel-a1-b0-seed7-57c3e6/checkpoint-008.npz": {
+    "bytes": 1555842,
+    "sha256": "7c89de57808553fdbd5fea32210c06445901ec77d1770671ead3c1d0281bec17"
+  },
+  "20261014T000003Z-transit-hotel-a1-b1-seed7-24709f/checkpoint-000.npz": {
+    "bytes": 1617658,
+    "sha256": "46ea9a9f5aa9c3afde211f823246c00b5e473c35315bbf4689d723c08fc2a3f0"
+  },
+  "20261014T000003Z-transit-hotel-a1-b1-seed7-24709f/checkpoint-024.npz": {
+    "bytes": 1738579,
+    "sha256": "ab3579d33208dbe425302beefc6c886cc94c215b28091e38508c48e46ad44657"
+  },
+  "20261014T000003Z-transit-hotel-a1-b1-seed7-24709f/checkpoint-008.npz": {
+    "bytes": 1555842,
+    "sha256": "7c89de57808553fdbd5fea32210c06445901ec77d1770671ead3c1d0281bec17"
+  }
+}

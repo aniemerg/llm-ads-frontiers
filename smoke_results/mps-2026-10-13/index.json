@@ -1,0 +1,22 @@
+{
+  "validated": {
+    "local_full_trace_directory": "artifacts/live-mps-validated",
+    "source": "recorded live model output",
+    "checkpoints": "Full arrays retained locally; hashes committed. JSON traces copied unchanged."
+  },
+  "length-cap": {
+    "local_full_trace_directory": "artifacts/live-length-cap",
+    "source": "recorded live model output",
+    "checkpoints": "Full arrays retained locally; hashes committed. JSON traces copied unchanged."
+  },
+  "float16-failed": {
+    "local_full_trace_directory": "artifacts/live-mps",
+    "source": "recorded live model output",
+    "checkpoints": "Full arrays retained locally; hashes committed. JSON traces copied unchanged."
+  },
+  "float32-strict-failed": {
+    "local_full_trace_directory": "artifacts/live-mps-float32",
+    "source": "recorded live model output",
+    "checkpoints": "Full arrays retained locally; hashes committed. JSON traces copied unchanged."
+  }
+}

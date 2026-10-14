@@ -1,0 +1,14 @@
+{
+  "20261014T000038Z-transit-hotel-a1-b0-seed7-f2236a/checkpoint-000.npz": {
+    "bytes": 2302290,
+    "sha256": "3d1cd8086675e29f38453c0f0652b444a76313386225fb0bc99f7193cb4efe08"
+  },
+  "20261014T000038Z-transit-hotel-a1-b0-seed7-f2236a/checkpoint-024.npz": {
+    "bytes": 2305163,
+    "sha256": "7a1b3b91162a95455f4f6cd6e87cc0be2ee525bd19cab652fc2b2f285769d65c"
+  },
+  "20261014T000038Z-transit-hotel-a1-b0-seed7-f2236a/checkpoint-008.npz": {
+    "bytes": 2266131,
+    "sha256": "a75bb5123f97df833347d65fcc300ed803275210617f49f575dd90d51c2a3472"
+  }
+}

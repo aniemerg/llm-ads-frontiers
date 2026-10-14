@@ -1,0 +1,46 @@
+{
+  "transit-hotel": {
+    "title": "A shuttle and a hotel",
+    "task": "Write one friendly, coherent message of about 40 words for someone planning a weekend in the fictional Harbor District. Suggest a practical visit using only the supplied facts.",
+    "advertisers": [
+      {
+        "brand": "HarborHop",
+        "facts": [
+          "HarborHop is an electric shuttle between Central Station and the Harbor District.",
+          "Its shuttles have step-free boarding.",
+          "Its shuttles have space for bicycles."
+        ]
+      },
+      {
+        "brand": "Lantern House",
+        "facts": [
+          "Lantern House is a hotel in the Harbor District.",
+          "It has a quiet courtyard.",
+          "It offers luggage storage."
+        ]
+      }
+    ]
+  },
+  "competing-hotels": {
+    "title": "Two competing hotels",
+    "task": "Write one friendly, coherent message of about 40 words for someone choosing a hotel for a weekend in the fictional Harbor District. Suggest a practical visit using only the supplied facts.",
+    "advertisers": [
+      {
+        "brand": "Lantern House",
+        "facts": [
+          "Lantern House is a hotel in the Harbor District.",
+          "It has a quiet courtyard.",
+          "It offers luggage storage."
+        ]
+      },
+      {
+        "brand": "Tideglass Hotel",
+        "facts": [
+          "Tideglass Hotel is a hotel beside Central Station.",
+          "It has a rooftop reading room.",
+          "It offers luggage storage."
+        ]
+      }
+    ]
+  }
+}

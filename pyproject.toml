@@ -1,0 +1,38 @@
+[project]
+name = "token-auction-lab"
+version = "0.1.0"
+description = "Two-context language-model decoding with auditable token auctions"
+requires-python = ">=3.11"
+dependencies = ["numpy>=1.26,<3"]
+
+[project.optional-dependencies]
+inference = ["torch>=2.6,<3", "transformers>=4.51,<5"]
+dev = ["ruff>=0.11,<1"]
+
+[project.scripts]
+token-auction = "token_auction_lab.cli:main"
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["auction"]
+
+[tool.setuptools.packages.find]
+include = ["token_auction_lab*"]
+
+[tool.setuptools.package-data]
+token_auction_lab = ["fact_sheets.json"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+# Supplied mathematical reference is retained byte-for-byte.
+"auction.py" = ["E", "I"]
+"test_auction.py" = ["E", "I"]

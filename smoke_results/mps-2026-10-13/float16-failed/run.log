@@ -1,0 +1,47 @@
+{"status": "loading", "model": "Qwen/Qwen3-4B-Instruct-2507", "revision": "cdbee75f17c01a7cc42f958dc650907174af0554", "device": "mps", "dtype": "float16"}
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards:  33%|███▎      | 1/3 [00:00<00:01,  1.84it/s]Loading checkpoint shards:  67%|██████▋   | 2/3 [00:01<00:00,  1.77it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:01<00:00,  2.64it/s]
+{"type": "round_end", "round_id": "20261013T235956Z-transit-hotel-a1-b0-seed7-57c3e6", "mode": "live_model", "bid_a": 1.0, "bid_b": 0.0, "seed": 7, "token_ids": [38704, 697, 9001, 304, 279, 39182, 10942, 0, 11778, 279, 3019, 12577, 11, 34986, 21896, 39182, 87273, 504, 10684, 16629, 2293, 45022, 11, 41588, 21896, 11, 323, 16710, 13, 23239, 369, 3709, 311, 67492, 4678, 748, 11340, 65285, 476, 27572, 50497, 13, 151645], "text": "Enjoy your weekend in the Harbor District! Take the step-free, bicycle-friendly HarborHop from Central Station—easy, eco-friendly, and convenient. Perfect for getting to Lantern House’s quiet courtyard or storing luggage.", "tokens": 43, "stop_reason": "eos", "payment_a": 0.0, "payment_b": 0.0, "prefill_seconds": 1.5700169169999754, "seconds": 6.017812791999859, "time_to_first_token_seconds": 2.1836929999999484, "seconds_per_token": 0.13994913469767115, "decode_seconds_per_token": 0.10343711337209031, "mean_disagreement_mass": 0.3378598333570598, "shared_suffix_verified": true, "cache_max_absolute_errors": [0.09375, 0.083984375], "cache_tolerance": {"atol": 0.08, "rtol": 0.02}, "cache_validation_seconds": 0.8076310840001497, "memory": {"process_peak_rss_bytes": 12390367232, "process_peak_scope": "process lifetime through generation end; includes model load and any earlier rounds, not an isolated per-round device peak", "kind": "mps_current_allocated_not_peak", "bytes": 8206276608, "sampled_peak_allocated_bytes": 8360759040, "sampling_note": "Sampled after prefill and each token; excludes transient allocations inside forwards. The MPS API does not expose an allocator peak."}}
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/allanniemerg/dev5/frontiers-pm/.worktrees/inference/token_auction_lab/cli.py", line 177, in <module>
+    main()
+  File "/Users/allanniemerg/dev5/frontiers-pm/.worktrees/inference/token_auction_lab/cli.py", line 168, in main
+    result = run_round(model, tokenizer, prompts, config, args.output / name, metadata)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/allanniemerg/dev5/frontiers-pm/.worktrees/inference/.venv/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/allanniemerg/dev5/frontiers-pm/.worktrees/inference/token_auction_lab/runner.py", line 234, in run_round
+    errors = decoder.check_cache(atol=atol, rtol=rtol)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/allanniemerg/dev5/frontiers-pm/.worktrees/inference/.venv/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/allanniemerg/dev5/frontiers-pm/.worktrees/inference/token_auction_lab/decoder.py", line 118, in check_cache
+    torch.testing.assert_close(actual, context.logits, atol=atol, rtol=rtol)
+  File "/Users/allanniemerg/dev5/frontiers-pm/.worktrees/inference/.venv/lib/python3.11/site-packages/torch/testing/_comparison.py", line 1689, in assert_close
+    raise error_metas[0].to_error(msg)
+AssertionError: Tensor-likes are not close!
+
+Mismatched elements: 54 / 151936 (0.0%)
+Greatest absolute difference: 0.10595703125 at index (129376,) (up to 0.08 allowed)
+Greatest relative difference: 112.375 at index (126599,) (up to 0.02 allowed)
+       16.17 real         6.07 user         6.15 sys
+         12390367232  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+             1055330  page reclaims
+                6546  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                  14  messages sent
+                  35  messages received
+                   0  signals received
+                 121  voluntary context switches
+               55179  involuntary context switches
+         79113384073  instructions retired
+         40235175732  cycles elapsed
+         10001016512  peak memory footprint
