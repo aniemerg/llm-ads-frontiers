@@ -1,6 +1,6 @@
 {
-  "prompt": "Write a friendly travel-planning message of about 200 words for a visitor to a conference in the fictional Fort Mason district. Discuss arrival, choosing a place to stay, and what to check before making arrangements. Use only the supplied facts, and frame unknown details as things to check.",
-  "instructions": "Write only the requested message, without analysis or explanations.\nUse the exact brand names when mentioning a brand. Treat the supplied fact sheets\nas the entire factual record. Do not invent prices, discounts, schedules,\navailability, distances, ratings, endorsements, amenities, or real transactions.\nDo not claim a booking or purchase occurred. Keep the message concise and coherent.",
+  "prompt": "I'm planning a trip to Fort Mason in San Fransisco for a conference. Can you help me identify travel from SFO to the the Fort Mason area and a place to stay?",
+  "instructions": "Write only the requested response, without analysis or explanations of these instructions.\nWrite a friendly, coherent travel-planning response of about 220–280 words in several short paragraphs. Address both arrival transport and choosing a place to stay.\nMention your advertiser naturally by its exact brand name near the beginning when relevant. Continue with useful planning guidance and questions to check before making arrangements. Avoid repetition or filler.\nTreat the supplied fact sheet as the entire factual record. Do not invent prices, discounts, schedules, availability, distances, ratings, endorsements, amenities, or real transactions. Frame unknown details as things to check. Do not claim a booking or purchase occurred.",
   "advertisers": [
     {
       "brand": "Paradigm House",
@@ -10,7 +10,7 @@
     },
     {
       "brand": "Fort Mason Express",
-      "facts": "Fort Mason Express is a shuttle between Central Station and the Fort Mason district.\nIts shuttles have step-free boarding.\nIts shuttles have space for bicycles.",
+      "facts": "Fort Mason Express is a shuttle between SFO and the Fort Mason district.\nIts shuttles have step-free boarding.\nIts shuttles have space for bicycles.",
       "objective": "Mention your brand by its exact name naturally, using only its supplied facts.",
       "bid": 1.0
     }
