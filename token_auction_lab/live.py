@@ -16,6 +16,8 @@ import threading
 import time
 import uuid
 
+from token_auction_lab.prompts import ADVERTISER_PROMPT_POLICY
+
 MODEL = "Qwen/Qwen3-4B-Instruct-2507"
 REVISION = "cdbee75f17c01a7cc42f958dc650907174af0554"
 ROOT = Path(__file__).resolve().parents[1]
@@ -94,16 +96,15 @@ def default_inputs():
 
 
 def live_messages(request: LiveRequest, advertiser: int | None):
-    """Bid values are deliberately never read by the prompt renderer."""
+    """Only the selected advertiser's brief is read; bids never enter prompts."""
     if advertiser not in (None, 0, 1):
         raise ValueError("Exactly two advertisers are supported.")
     if advertiser is None:
         # The reference is the unmodified user prompt, with no ad-related system text.
         return [{"role": "user", "content": request.prompt}]
     else:
-        facts = "\n\n".join(f"{ad.brand}:\n{ad.facts}" for ad in request.advertisers)
         ad = request.advertisers[advertiser]
-        system = f"{request.instructions}\n\nShared allowed facts:\n{facts}\n\n" \
+        system = f"{request.instructions}\n\n" \
             f"Your advertiser: {ad.brand}\nYour advertiser objective:\n{ad.objective}\n\n" \
             f"Your advertiser's fact sheet:\n{ad.facts}"
     return [{"role": "system", "content": system}, {"role": "user", "content": request.prompt}]
@@ -173,6 +174,7 @@ class InferenceEngine:
             prompts.append((text, ids))
         sources = [*sorted((ROOT / "token_auction_lab").glob("*.py")), ROOT / "auction.py"]
         metadata = {**self.metadata, "torch_seed": request.seed, "editable_inputs": asdict(request),
+            "advertiser_prompt_policy": ADVERTISER_PROMPT_POLICY,
             "source_sha256": {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
                 for p in sources},
             "reference_sha256": hashlib.sha256((ROOT / "auction.py").read_bytes()).hexdigest(),

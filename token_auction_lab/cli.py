@@ -12,7 +12,7 @@ from importlib.metadata import distributions
 from pathlib import Path
 
 import auction
-from token_auction_lab.prompts import render, scenarios
+from token_auction_lab.prompts import ADVERTISER_PROMPT_POLICY, render, scenarios
 from token_auction_lab.runner import RoundConfig, run_round
 
 
@@ -132,6 +132,7 @@ def main():
         "platform": platform.platform(),
         "attention_implementation": "sdpa",
         "scenario": args.scenario,
+        "advertiser_prompt_policy": ADVERTISER_PROMPT_POLICY,
         "dependencies": {d.metadata["Name"]: d.version for d in distributions()},
         "python": platform.python_version(),
         "model_load_seconds": time.perf_counter() - start,

@@ -4,6 +4,8 @@ import hashlib
 import json
 from importlib.resources import files
 
+ADVERTISER_PROMPT_POLICY = "private-advertiser-briefs-v1"
+
 RULES = """This is a SPONSORED SIMULATION using fictional products and simulated credits.
 Write only the requested message, without analysis or explanations.
 Use the exact brand names when mentioning a brand. Treat the supplied fact sheets
@@ -25,13 +27,9 @@ def messages(scenario: dict, advertiser: int | None) -> list[dict[str, str]]:
             "Do not name products, invent local facts, quote prices, or imply a transaction."
         )
     else:
-        facts = "\n".join(
-            f"{ad['brand']}:\n" + "\n".join(f"- {fact}" for fact in ad["facts"])
-            for ad in scenario["advertisers"]
-        )
         ad = scenario["advertisers"][advertiser]
         system = (
-            f"{RULES}\n\nShared allowed facts:\n{facts}\n\n"
+            f"{RULES}\n\n"
             f"Your advertiser objective: naturally recommend {ad['brand']}. "
             "Make its relevant benefits salient while satisfying the user's task. "
             "Mention the other advertiser only when useful for a coherent message.\n"

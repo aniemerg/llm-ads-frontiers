@@ -46,6 +46,20 @@ and a spinner is shown during generation and cache validation.
 The saved defaults use the Fort Mason conference prompt, Bayview Hotel, and
 Lantern House from the captured user run.
 
+Each advertiser context receives the shared task and instructions, plus **only
+its own brand, fact sheet, and objective**. Editing one advertiser's brief does
+not change the other's starting prompt. Both still receive every generated
+token, so information can cross through the shared response. Shared instructions
+and the user task are visible to both; put private advertiser material in its
+own panel. This matches the private-prompt structure of the paper's
+[Section 5 demonstration](https://arxiv.org/html/2310.10826v3#S5.SS1).
+It does not guarantee that brand tokens are contested or paid.
+
+Live Lab and the CLI record `private-advertiser-briefs-v1` in new manifests.
+The archived smoke runs used both fact sheets in both starting prompts; their
+recordings and captured test output remain unchanged and describe that earlier
+setup. Changing prompts changes the model distributions, not the auction math.
+
 Live inference requires the inference dependencies below and a locally cached
 `Qwen/Qwen3-4B-Instruct-2507` model and tokenizer at revision
 `cdbee75f17c01a7cc42f958dc650907174af0554`. The smoke command below can populate
@@ -100,16 +114,19 @@ versions; pip resolves within the ranges in `pyproject.toml`.
 
 The CPU auction reference only needs `pip install -r requirements.txt`.
 Without the inference dependencies, decoder tests are explicitly skipped.
-The complete suite has 35 tests: all 11 original auction tests, a prompt test,
+The complete suite has 38 tests: all 11 original auction tests, two prompt tests,
 and eleven decoder tests using tiny randomly initialized Qwen models. These
 synthetic models test mechanics and cache correctness, not text quality.
 Three additional walkthrough tests check archived evidence fidelity, the source
 file allowlist, and browser counterfactuals against 312 Python-reference cases.
 The last check uses Node.js and is explicitly skipped when Node is unavailable.
-Nine live-service tests cover editable prompts and bid isolation, validation,
+Eleven live-service tests cover editable prompts and bid isolation, validation,
 immutable round inputs and concurrency, full-vector inspection, preservation of
 failed attempts, and rejection of cross-origin inference requests. These use
 synthetic fixtures and do not establish model quality.
+Prompt checks retain the shared-task, own-facts, and bid-exclusion assertions;
+the former shared-facts expectation is now private-brief isolation. New checks
+cover both directions of private edits and common task/instruction edits.
 The new checks verify that the no-ad observer matches a full-prefix forward,
 leaves auction tokens/tapes/payments unchanged, includes no-ad candidates in the
 display table, and preserves both outputs if the independent answer fails.

@@ -1,6 +1,7 @@
 """Model-loop tests use random tiny Qwen weights: they are not quality evidence."""
 
 import json
+from copy import deepcopy
 import tempfile
 import unittest
 from pathlib import Path
@@ -22,17 +23,33 @@ except ImportError:
 
 
 class PromptTests(unittest.TestCase):
-    def test_same_user_task_and_allowed_facts_in_both_contexts(self):
+    def test_same_user_task_and_private_facts_in_each_context(self):
         for scenario in scenarios().values():
             a, b = (messages(scenario, i) for i in (0, 1))
             self.assertEqual(a[-1], b[-1])
             self.assertNotEqual(a[0], b[0])
-            for ad in scenario["advertisers"]:
+            for side, ad in enumerate(scenario["advertisers"]):
+                system = (a, b)[side][0]["content"]
+                self.assertIn(ad["brand"], system)
+                self.assertNotIn(scenario["advertisers"][1 - side]["brand"], system)
                 for fact in ad["facts"]:
-                    self.assertIn(fact, a[0]["content"])
-                    self.assertIn(fact, b[0]["content"])
+                    self.assertIn(fact, system)
             self.assertNotIn("bid", a[0]["content"].lower())
             self.assertNotIn("bid", b[0]["content"].lower())
+
+    def test_private_brief_edits_leave_the_other_prompt_unchanged(self):
+        for scenario in scenarios().values():
+            for side in (0, 1):
+                edited = deepcopy(scenario)
+                edited["advertisers"][side] = {
+                    "brand": "PRIVATE_BRAND_SENTINEL",
+                    "facts": ["PRIVATE_FACT_SENTINEL"],
+                }
+                own = messages(edited, side)
+                other = messages(edited, 1 - side)
+                self.assertIn("PRIVATE_BRAND_SENTINEL", own[0]["content"])
+                self.assertIn("PRIVATE_FACT_SENTINEL", own[0]["content"])
+                self.assertEqual(other, messages(scenario, 1 - side))
 
 
 class TestTokenizer:

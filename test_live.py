@@ -77,8 +77,8 @@ class LiveContractTests(unittest.TestCase):
             self.assertEqual(live_messages(original, side), live_messages(changed, side))
         for side in (0, 1):
             system = live_messages(original, side)[0]["content"]
-            for ad in original.advertisers:
-                self.assertIn(ad.facts, system)
+            self.assertIn(original.advertisers[side].brand, system)
+            self.assertIn(original.advertisers[side].facts, system)
             self.assertIn(original.advertisers[side].objective, system)
             self.assertIn(original.instructions, system)
             self.assertEqual(live_messages(original, side)[1]["content"], original.prompt)
@@ -89,7 +89,34 @@ class LiveContractTests(unittest.TestCase):
         self.assertEqual(live_messages(request, 1), live_messages(changed, 1))
         edited["advertisers"][0]["facts"] = "New explicit bicycle fact."
         request = LiveRequest.parse(edited)
-        self.assertTrue(all("New explicit bicycle fact." in live_messages(request, i)[0]["content"] for i in (0, 1)))
+        self.assertIn("New explicit bicycle fact.", live_messages(request, 0)[0]["content"])
+        self.assertEqual(live_messages(request, 1), live_messages(changed, 1))
+
+    def test_private_brand_facts_and_objective_edits_do_not_leak_to_rival(self):
+        payload = default_inputs()
+        original = LiveRequest.parse(payload)
+        for side in (0, 1):
+            for field in ("brand", "facts", "objective"):
+                with self.subTest(side=side, field=field):
+                    edited = deepcopy(payload)
+                    sentinel = f"PRIVATE_{side}_{field}_SENTINEL"
+                    edited["advertisers"][side][field] = sentinel
+                    request = LiveRequest.parse(edited)
+                    self.assertIn(sentinel, live_messages(request, side)[0]["content"])
+                    self.assertEqual(live_messages(request, 1 - side),
+                        live_messages(original, 1 - side))
+
+    def test_shared_task_and_instructions_edits_reach_both_contexts(self):
+        payload = default_inputs()
+        original = LiveRequest.parse(payload)
+        for field in ("prompt", "instructions"):
+            edited = deepcopy(payload)
+            edited[field] = "SHARED_EDIT_SENTINEL"
+            request = LiveRequest.parse(edited)
+            for side in (0, 1):
+                rendered = live_messages(request, side)
+                self.assertNotEqual(rendered, live_messages(original, side))
+                self.assertTrue(any("SHARED_EDIT_SENTINEL" in m["content"] for m in rendered))
 
     def test_validation_and_separate_zero_bid_baseline(self):
         invalid = [
