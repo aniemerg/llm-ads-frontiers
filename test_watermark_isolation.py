@@ -23,6 +23,7 @@ DECODER_SOURCES = (
     "experiments/ad_stego/tilt.py",
     "experiments/ad_stego/tilt_race.py",
     "experiments/ad_stego/word_window.py",
+    "experiments/ad_stego/word_redundant.py",
     "experiments/ad_stego/tokenizer_check.py",
     "experiments/ad_stego/synthetic.py",
 )

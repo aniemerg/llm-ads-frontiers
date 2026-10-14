@@ -8,7 +8,7 @@ from pathlib import Path
 
 import numpy as np
 
-from experiments.ad_stego import tilt_race, word_window
+from experiments.ad_stego import tilt_race, word_redundant, word_window
 from experiments.ad_stego.prototype import score_threshold
 from token_auction_lab import watermark as wm
 
@@ -22,6 +22,26 @@ def summarize(folder):
         groups = word_window.carrier_groups(run["text"], encoding)
         diagnostics = []
         for record in run["encoded"].get("records", []):
+            if record.get("protocol") == word_redundant.PROTOCOL:
+                chunks, byte_offsets = word_redundant.positions(run["text"], encoding)
+                family = next(f for f in run["decoded"]["families"]
+                              if f["protocol"] == word_redundant.PROTOCOL)
+                lanes = []
+                for lane in (0, 1, "all"):
+                    indices = [i for i, chunk in enumerate(chunks)
+                               if chunk * word_redundant.CHUNK_WORDS >= record["carrier_start_word"]
+                               and (lane == "all" or (chunk - 1) % 2 == lane)]
+                    evidence = sum(float(tilt_race.token_evidence(
+                        encoding.ids[i], wm.KEY, np.uint64(record["message_seed"]),
+                        byte_offsets[i], tokenizer.vocab_size)) for i in indices)
+                    threshold = (score_threshold(len(indices), family["hypotheses_tested"], 0.005)
+                                 if len(indices) >= word_redundant.MIN_EVIDENCE_TOKENS else None)
+                    lanes.append({"lane": lane, "score": evidence, "threshold": threshold,
+                                  "scored_tokens": len(indices)})
+                diagnostics.append({"region": record["text"], "assigned_lane": record["lane"],
+                                    "carried_steps": len(record.get("carried_steps", [])),
+                                    "carrier_chunks": len(record["carriers"]), "lanes": lanes})
+                continue
             if record.get("protocol") != word_window.PROTOCOL:
                 continue
             indices = groups.get(record["carrier_start_word"], [])
@@ -29,7 +49,8 @@ def summarize(folder):
                 encoding.ids[i], wm.KEY, np.uint64(record["message_seed"]),
                 len(run["text"][:encoding.offsets[i][0]].encode()), tokenizer.vocab_size))
                 for i in indices)
-            family = run["decoded"]["families"][0]
+            family = next(f for f in run["decoded"]["families"]
+                          if f["protocol"] == word_window.PROTOCOL)
             threshold = (score_threshold(len(indices), family["hypotheses_tested"], 0.005)
                          if len(indices) >= word_window.MIN_EVIDENCE_TOKENS else None)
             diagnostics.append({"region": record["text"], "score": evidence,
@@ -63,10 +84,18 @@ def summarize(folder):
     isolation = folder / "isolation-checks.json"
     if isolation.is_file():
         report["text_only_isolation_checks"] = json.loads(isolation.read_text())
+    replays = folder / "replayed-controls.json"
+    if replays.is_file():
+        report["replayed_unmarked_controls"] = json.loads(replays.read_text())
+        report["replay_summary"] = {
+            "mode": "REPLAY; these are not new inference trials or unseen calibration data",
+            "controls": len(report["replayed_unmarked_controls"]),
+            "controls_with_detections": sum(bool(r["decoded"]["spans"])
+                                            for r in report["replayed_unmarked_controls"]),
+        }
     report["batch_source_note"] = (
         "Protocol, sampling parameters, and thresholds stayed fixed throughout this batch. "
-        "Formatting-only source changes and UI/documentation edits occurred during evaluation; "
-        "each run retains its filesystem source hashes."
+        "Each run retains its filesystem source hashes."
     )
     return report
 
@@ -98,9 +127,9 @@ def render(report):
             '</style><h1>AdReveal: regions up to 16 words</h1>'
             '<p>LIVE MODEL EVALUATION · Qwen3-4B on local MPS · public key 1901</p>'
             f'<p>{esc(report["post_decode_analysis_note"])}</p>'
-            '<p>Earlier exact-span batch: both brands recovered in 3/8 marked responses; '
-            '0/4 controls flagged. Different seeds and protocol: not a paired comparison.</p>'
+            f'<p>{esc(report.get("comparison_note", "All planned runs retained."))}</p>'
             f'<pre>{esc(json.dumps(report["summary"], indent=2))}</pre>'
+            f'<pre>{esc(json.dumps(report.get("replay_summary", {}), indent=2))}</pre>'
             '<table><tr><th>Run</th><th>Brands recovered</th><th>Extra detections</th>'
             '<th>Run status</th></tr>' + ''.join(rows) + '</table>' + ''.join(details))
 
@@ -109,8 +138,32 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("folder", type=Path)
     parser.add_argument("archive", type=Path, help="JSON archive path; HTML uses the same stem")
+    parser.add_argument("--baseline", type=Path)
+    parser.add_argument("--demo", type=Path,
+                        help="Separate repeat used to restore a marked app result")
     args = parser.parse_args()
     report = summarize(args.folder)
+    if args.demo:
+        demo = json.loads(args.demo.read_text())["runs"][0]
+        report["demo_repeat"] = {
+            "note": ("Additional repeat to leave a marked result in the app; "
+                     "excluded from batch counts"),
+            **{k: demo[k] for k in ("seed", "run_id", "status", "text_sha256", "metrics")},
+        }
+    if args.baseline:
+        baseline = json.loads(args.baseline.read_text())
+        old = {r["seed"]: r for r in baseline["runs"] if r["watermark"]}
+        report["paired_comparison"] = [
+            {"seed": r["seed"], "before": old[r["seed"]]["metrics"]["correctly_recovered_brands"],
+             "after": r["metrics"]["correctly_recovered_brands"]}
+            for r in report["runs"] if r["watermark"] and r["seed"] in old]
+        old_marked = list(old.values())
+        both = sum(r["metrics"]["both_brands_correct_no_extras"] for r in old_marked)
+        report["comparison_note"] = (
+            f"Previous single-block region protocol: both brands in {both}/{len(old_marked)} runs. "
+            "Marked runs use the same seeds and inputs; changed sampling can change later text. "
+            "The two current controls use new seeds. Small sample; not a calibrated failure rate."
+        )
     args.archive.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n")
     args.archive.with_suffix(".html").write_text(render(report))
     print(json.dumps(report["summary"], indent=2))

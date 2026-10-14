@@ -201,8 +201,8 @@ def run_round(
         manifest["watermark"]["brands"] = list(encoder.brands)
         manifest["watermark"]["mention_policy"] = MENTION_POLICY
         manifest["watermark"]["schedule"] = (
-            "FIFO first eligible mention per brand in aligned 8/16-word regions; "
-            "48-word carriers, UTF-8 prefix byte positions; identical regions deduplicated.")
+            "First eligible 16-word region per brand; repeat in alternating 16-word chunks "
+            "until EOS, borrowing empty lanes. UTF-8 prefix byte positions; regions deduplicated.")
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     if on_event:
         on_event({"type": "round_start", "manifest": manifest})
@@ -380,10 +380,12 @@ def run_round(
             visible = decoder.generated[:-1] if decoder.generated and decoder.generated[-1] in eos_ids(model, tokenizer) else decoder.generated
             audit = encoder.finish(text, visible)
             audit["carried_steps"] = carried_steps
-            audit["block_position_policy"] = "All final-text tokens, including carried tokens, are scored using visible-prefix byte positions in 48-word carrier blocks."
+            audit["block_position_policy"] = "All final-text tokens, including carried tokens, are scored using visible-prefix byte positions in alternating 16-word chunks."
             for record in audit.get("records", []):
-                record["carried_steps"] = [s for s in carried_steps
-                    if record["carrier_start"] <= s < min(record["carrier_end"], len(visible))]
+                carriers = record.get("carriers", [record])
+                record["carried_steps"] = [s for s in carried_steps if any(
+                    c["carrier_start"] <= s < min(c["carrier_end"], len(visible))
+                    for c in carriers)]
             decoded = decode_response(text) if text else {"status": "insufficient_evidence", "spans": [], "coverage": "unknown"}
             watermark_result = {"audit": audit, "decoded": decoded}
             (output / "watermark.json").write_text(json.dumps(audit, indent=2, ensure_ascii=False) + "\n")

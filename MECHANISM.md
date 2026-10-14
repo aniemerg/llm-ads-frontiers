@@ -147,81 +147,75 @@ and unsuccessful completions remain visible and unedited.
 
 ## Experimental brand watermark (October 14, 2026)
 
-The live app uses the experimental `word-window16-byte-green4-exp-v2`
-protocol (`tilt-race` with coarse word regions). The saved live demo defaults enable it. Winner continuation can run
-alongside it; zero/zero bids cannot use watermark mode. Two private
-advertiser contexts, fixed bids, and exact shared selected IDs are preserved.
+The current app uses `word16-byte-lanes-repeat-green4-exp-v3`. It preserves two
+private advertiser contexts, fixed bids outside prompts, exact selected token IDs
+in both contexts, simulated credits, and the existing winner-continuation rule.
+The saved defaults enable watermarking; zero/zero bids cannot use this mode.
 
-The encoder freezes both brand names and queues only the first eligible exact
-word-bounded occurrence of each brand, FIFO at aligned 48-word boundaries.
-A brand is reserved when queued, so repeated mentions cannot displace the other
-brand or consume additional blocks. The allowance resets for each response.
-Words are whitespace-delimited. Each occurrence is covered by the smallest
-8-word-grid region of 8 or 16 words that contains it. The region must end before
-the carrier's starting word count. Identical regions are encoded once, even if
-they contain both brands; distinct overlapping regions stay separate. Each
-region's coordinates and literal text seed its codeword. A brand spanning more
-than 16 grid-aligned words is ineligible. No brand dictionary reaches decoding.
+Each brand's first eligible exact word-bounded occurrence selects one **16-word
+region**, starting on an 8-word grid. Words are whitespace-delimited. The region
+must contain the whole brand; its last word must finish before encoding begins.
+Distinct regions can overlap. Identical regions are deduplicated even if they
+contain both brands. A region's coordinates and literal text seed its codeword.
+A brand is identified once per response; its evidence can be repeated many times.
+No advertiser dictionary, brand identities, or run metadata reach the decoder.
 
-Carrier assignment uses the number of words in the visible prefix (including an
-unfinished final word), grouped into blocks of 48. Evidence fields use the UTF-8
-byte length of that prefix. The decoder reconstructs these positions from final
-text and the pinned tokenizer. Token merges can lose local evidence but do not
-shift all later byte positions. Split Unicode or other noncanonical tokenization
-can still lose evidence; this is not edit robustness. Model contexts always keep
-the exact selected IDs. Audits retain canonical-roundtrip diagnostics, but v2
-does not stop encoding on a mismatch.
+The first discovered region gets lane 0, the second lane 1. In each visible
+prefix, count words (including the unfinished final word), take the integer
+16-word chunk index, then assign `(chunk_index - 1) mod 2` as its lane. The
+corresponding region is encoded throughout that chunk. Until a second region is
+available, the first borrows the empty lane. Once a region is available, no later
+chunk is left idle. The scheduler does not query the decoder, wait for success,
+force extra prose, or alter EOS/manual-stop behavior.
 
-A carrier with at least 32 canonical tokens can be scored, including a partial
-last block. Its Gamma threshold uses its actual token count. EOS and manual stop
-can leave insufficient evidence or queued mentions; no prose is added and no
-undecodable block is retried. One attempt per brand does not guarantee recovery.
+Evidence fields use the UTF-8 byte length of the visible prefix, so local token
+merges need not misalign all later evidence. Split Unicode and noncanonical
+segmentation can still erase evidence; this is not edit robustness. The model
+contexts always retain the exact generated IDs. Canonical-roundtrip diagnostics
+remain in the audit without disabling further encoding.
 
-Continuation takes precedence: test the current winner’s original probabilities
-after temperature, before watermark adjustment. Up to the configured limit
-(default three), a token meeting the threshold (default 98%) is emitted free and
-deterministically. Carried tokens draw no random tape, bypass watermark sampling,
-and never renew the allowance. The first confidence miss or exhausted allowance
-resumes an auction at that same position. Every selected ID still advances both
-bidder contexts and the observer, including EOS.
+For every possible 16-word region on the 8-word grid, the text-only decoder tests
+three fixed hypotheses: all later eligible tokens in lane 0, in lane 1, or in both
+lanes. Eligibility starts at the first 16-word boundary strictly after the region
+ends. Each hypothesis needs at least 32 scored tokens. Scores accumulate to the
+end of the response, across discontiguous repeated chunks. The Gamma threshold
+uses the actual scored-token count; Bonferroni counts all eligible region/lane
+hypotheses. The lowest corrected p-value is retained per region, so repeated
+evidence does not create duplicate highlights. Each displayed region remains at
+most 16 words; overlapping highlights blend without duplicating response text.
+Colors identify regions, not advertiser identities.
 
-Carried tokens remain inside the visible-text carrier blocks. The encoder schedule
-advances with the visible prefix, and the text-only decoder scores all tokens
-without a hidden skip mask. These tokens add no intentional encoding signal,
-so recovery may weaken. The combined mode is not calibrated for recovery or
-false positives. Audits retain carried positions, including partial blocks;
-the inspector shows deterministic output probability and links to the original
-win. Carried-step q is the hypothetical raw auction mixture, not coded sampling.
+Winner continuation still takes precedence using raw post-temperature model
+confidence, before watermark adjustment. Its up-to-three high-confidence tokens
+remain free and deterministic, and never renew an allowance. They bypass the
+watermark sampler but remain in the visible-text lanes and are scored without a
+hidden skip mask. This can dilute evidence. Audits retain each region's actual
+carrier chunks and carried steps. The inspector shows the original raw confidence
+and links to the win that granted continuation.
 
-On an auction step in an active block, a common keyed pattern multiplies preferred token
+On a sampled watermark step, the common keyed pattern multiplies preferred token
 probabilities by exp(4), then normalizes each bidder separately. No vocabulary
-rows are removed, including padded model rows. Common mass, contest branches,
-and charges use these **coded** distributions. Exponential candidate sampling
-uses a separately scoped keyed field. The ideal independent random-field model
-has the coded bid-weighted mixture; the finite public fixed-key implementation
-has no claimed exact fixed-key distribution guarantee. Original probabilities,
-mixtures, charges, and incentive interpretations are not preserved by this mode.
-Inactive blocks use the unchanged reference auction.
+rows are removed, including padded rows. Common mass, contest branches, and
+charges use these coded distributions. Exponential candidate sampling uses a
+separately scoped field. The ideal independent random-field model has the coded
+bid-weighted mixture; the finite public fixed-key implementation has no claimed
+exact fixed-key distribution guarantee. Original distributions, charges, and
+incentive interpretations are not preserved by this experimental mode. Steps
+before an eligible region use the reference auction.
 
-The inspector retains raw probabilities, reconstructs coded probabilities from
-the recorded payload, and replays the same watermark sampler for local bid
-counterfactuals. This does not regenerate later text. Manifests include protocol,
-key, strength, tokenizer hash, full vocabulary size, dependencies, source hashes,
-and precommitted brands. The public research key (1901) is not an authentication
-secret. `response.txt`, `watermark.json`, and `watermark-decoded.json` are saved
-before cache validation, so a failed cache check does not erase decoder evidence.
+The decoder has only final text and static public configuration. Current repeated
+region decoding receives nominal alpha .005. Historical v2 word-window decoding
+and v1 token-span decoding each receive .0025, totaling .01. These nominal values
+are not calibrated confidence percentages or an empirical false-positive bound.
+Historical reference implementations and their original thresholds, tests, and
+failure evidence are preserved. The 32-token minimum is a test eligibility rule,
+not a reliability guarantee. Late mentions, weak evidence, and false detections
+remain possible; coverage is unknown.
 
-The independent decoder accepts exact final text and fixed public protocols only. It
-never receives advertiser names, prompts, bids, generation seed, or auction
-traces. Results give zero-based half-open token spans and character offsets;
-coverage remains unknown. Nominal corrected p-values are not calibrated
-confidence percentages. It checks both v2 and legacy v1 with alpha .005 each,
-splitting the total nominal .01 budget. Each family's Bonferroni correction counts
-all its region/block hypotheses, including overlapping regions. V2 has fewer
-hypotheses than exact token spans. Multiple significant v2 regions are retained;
-their intersection gets a blended UI color without duplicating text. The UI caps
-each displayed region at 16 words, including legacy detections. Colors identify
-regions, not advertiser identities. The original v1 decoder at alpha .01 and its
-recorded false-positive regression remain unchanged in the reference tests.
-The recorded false positive, undecodable short response,
-and cache failures remain in the research evidence. See AD_WATERMARK_DESIGN.md.
+The inspector reconstructs coded probabilities and frozen-prefix counterfactuals
+from the saved per-step payload, including its byte position. Manifests retain
+protocol, key, strength, tokenizer hash/revision, dependencies, source hashes,
+seeds, prompts, bids, and generation parameters. The public key 1901 is not an
+authentication secret. Exact `response.txt`, encoding audit `watermark.json`, and
+independent `watermark-decoded.json` are saved before cache validation, including
+failed runs. See AD_WATERMARK_DESIGN.md and the retained evaluation reports.

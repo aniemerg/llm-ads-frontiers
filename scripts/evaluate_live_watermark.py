@@ -69,6 +69,8 @@ def main():
     parser.add_argument("--first-seed", type=int, default=21)
     parser.add_argument("--marked-runs", type=int, default=8)
     parser.add_argument("--control-runs", type=int, default=4)
+    parser.add_argument("--control-first-seed", type=int)
+    parser.add_argument("--marked-first", action="store_true")
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
     initial = api("/api/live")
@@ -76,10 +78,12 @@ def main():
         raise RuntimeError("An existing generation is active; batch was not started.")
     write(args.output / "before-batch.json", initial)
     base = initial.get("inputs", initial.get("defaults"))
-    cases = [{"watermark": False, "seed": s}
-             for s in range(args.first_seed, args.first_seed + args.control_runs)]
-    cases += [{"watermark": True, "seed": s}
+    control_seed = args.first_seed if args.control_first_seed is None else args.control_first_seed
+    controls = [{"watermark": False, "seed": s}
+                for s in range(control_seed, control_seed + args.control_runs)]
+    marked = [{"watermark": True, "seed": s}
               for s in range(args.first_seed, args.first_seed + args.marked_runs)]
+    cases = marked + controls if args.marked_first else controls + marked
     plan = {
         "mode": "LIVE_MODEL_WATERMARK_EVALUATION",
         "created_at": datetime.now(timezone.utc).isoformat(),

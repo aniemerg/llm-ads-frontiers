@@ -1,6 +1,33 @@
 # Steganographic ad presence and brand token spans
 
-**Current app update (October 14, 2026):** the app now uses 8/16-word regions,
+**Current v3 app:** each brand selects one fixed 16-word region. Its watermark
+repeats in alternating 16-word chunks until the response ends, borrowing the
+other lane while only one region is available. The decoder combines evidence
+from all later chunks using text alone and shows each region once. This uses
+otherwise-idle text for redundancy without requiring repeated brand mentions.
+See [MECHANISM.md](MECHANISM.md) for the exact current schedule and error budget.
+
+The v3 batch reran marked seeds 31–36 with exactly the same base inputs as v2:
+**both brands recovered in 5/6 responses, up from 1/6**, and **11/12 individual
+brand records recovered, up from 7/12**. No marked response had extra detections.
+Neither of two fresh unmarked controls (seeds 41–42) was flagged. Six previously
+generated unmarked controls also had no detections when replayed; those replays
+are not new or unseen calibration trials. All eight fresh runs passed cache
+validation, and every displayed region stayed within 16 words.
+
+The remaining failure was seed 34: the shuttle region became eligible at word
+160, leaving only 40 lane-1 tokens. Its score was 64.25 against a threshold of
+68.30. The hotel decoded. This is encouraging evidence on one small task, not
+a general reliability guarantee. The two protocol changes—fixed-width regions
+and repeated evidence—were tested together; this is not an isolated ablation.
+All planned runs and failures are retained in the
+[v3 HTML report](experiments/ad_stego/evidence/repeated_regions_batch_2026-10-14.html)
+and [v3 JSON evidence](experiments/ad_stego/evidence/repeated_regions_batch_2026-10-14.json).
+The full test suite passes 90 tests. Fresh isolated processes reproduced both
+a successful live decode and an unmarked control using only response text and
+fixed decoder files, without model, run-file, or advertiser-catalog access.
+
+**Previous v2 app update (October 14, 2026):** the app now uses 8/16-word regions,
 48-word carriers, and visible-prefix byte positions. Overlaps remain distinct
 and use blended highlights. The text-only decoder checks both protocols with
 half the nominal error budget each. See [MECHANISM.md](MECHANISM.md) for current

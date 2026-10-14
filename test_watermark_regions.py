@@ -31,7 +31,7 @@ class WordRegionTests(unittest.TestCase):
 
     def test_overlap_cap_fifo_and_once_per_brand(self):
         text = self.prefix()
-        encoder = wm.Encoder(("Paradigm House", "Fort Mason Express"))
+        encoder = wm.WordWindowEncoder(("Paradigm House", "Fort Mason Express"))
         ids = self.tokenizer.encode(text)
         first = encoder.at_step(len(ids), ids, text)
         self.assertEqual((first["start_word"], first["end_word"]), (0, 16))
@@ -47,13 +47,13 @@ class WordRegionTests(unittest.TestCase):
         self.assertIsNone(encoder.at_step(len(ids), ids, text))
         self.assertEqual(len(encoder.records), 2)
         self.assertTrue(all(len(r["text"].split()) <= 16 for r in encoder.records))
-        fresh = wm.Encoder(encoder.brands)
+        fresh = wm.WordWindowEncoder(encoder.brands)
         self.assertIsNotNone(fresh.at_step(len(ids), ids, text))
 
     def test_identical_region_is_encoded_once(self):
         text = "Paradigm House Fort Mason Express" + " plan" * 43
         ids = self.tokenizer.encode(text)
-        encoder = wm.Encoder(("Paradigm House", "Fort Mason Express"))
+        encoder = wm.WordWindowEncoder(("Paradigm House", "Fort Mason Express"))
         encoder.at_step(len(ids), ids, text)
         self.assertEqual(len(encoder.records), 1)
         self.assertFalse(encoder.queue)
@@ -62,7 +62,7 @@ class WordRegionTests(unittest.TestCase):
     def test_synthetic_recovery_with_local_token_merge_and_overlap(self):
         text = self.prefix()
         ids = self.tokenizer.encode(text)
-        encoder = wm.Encoder(("Paradigm House", "Fort Mason Express"))
+        encoder = wm.WordWindowEncoder(("Paradigm House", "Fort Mason Express"))
         pool = [" city", " trip", " path", " place", " plan", " visit", " guide", " day",
                 " road", " view", " coast", " town", " route", " space", " hotel", " bus",
                 " train", " water", " stay", " walk", " travel", " time", " local", " park"]

@@ -253,7 +253,7 @@ class CachedWatermarkReplayTests(unittest.TestCase):
         self.assertTrue(all(r["complete"] for r in audit["records"]))
         self.assertIsNone(encoder.active)
         self.assertFalse(audit["pending_mentions"])
-        self.assertEqual(audit["mention_policy"], wm.MENTION_POLICY)
+        self.assertEqual(audit["mention_policy"], wm.LEGACY_MENTION_POLICY)
         self.assertFalse(audit["prefix_alignment_failures"])
         # An observed mismatch disables encoding instead of rebuilding either context.
         encoder.at_step(320, [999], example["text"])

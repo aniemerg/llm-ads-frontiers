@@ -9,14 +9,15 @@ from pathlib import Path
 
 import numpy as np
 
-from experiments.ad_stego import tilt, tilt_race, word_window
+from experiments.ad_stego import tilt, tilt_race, word_redundant, word_window
 from experiments.ad_stego.prototype import Config, Span, decode
 from experiments.ad_stego.tokenizer_check import REVISION, QwenTokenizer
 
 KEY = 1901  # Public research key, not an authentication secret.
 VOCABULARY_SIZE = 151936
 CONFIG = Config()
-MENTION_POLICY = "first-eligible-mention-per-brand-v1"
+MENTION_POLICY = "one-region-per-brand-repeated-evidence-v3"
+LEGACY_MENTION_POLICY = "first-eligible-mention-per-brand-v1"
 EVIDENCE = Path(__file__).resolve().parents[1] / "experiments/ad_stego/evidence"
 PROBABILITY_NOTE = (
     "Coded mixture under the ideal independent random-field model; the finite fixed-key "
@@ -45,7 +46,7 @@ def get_tokenizer():
 
 def profile(legacy=False):
     return {
-        "protocol": tilt_race.PROTOCOL if legacy else word_window.PROTOCOL,
+        "protocol": tilt_race.PROTOCOL if legacy else word_redundant.PROTOCOL,
         "scheme": "tilt-race",
         "key": KEY,
         "tokenizer": "Qwen/Qwen3-4B-Instruct-2507",
@@ -55,9 +56,12 @@ def profile(legacy=False):
         "config": asdict(CONFIG),  # Legacy token-grid parameters and shared length/alpha limits.
         "region_grid_words": word_window.GRID,
         "max_region_words": word_window.MAX_WORDS,
-        "carrier_words": word_window.CARRIER_WORDS,
+        "carrier_words": word_redundant.CHUNK_WORDS,
+        "region_width_words": word_redundant.REGION_WORDS,
+        "evidence_policy": "repeat alternating lanes to EOS; borrow empty lane",
         "minimum_evidence_tokens": word_window.MIN_EVIDENCE_TOKENS,
         "decoder_alpha_per_protocol": CONFIG.alpha / 2,
+        "historical_decoder_alpha": CONFIG.alpha / 4,
         "position_reference": "token index" if legacy else "visible prefix UTF-8 byte length",
         "strength": tilt.STRENGTH,
         "preferred_fraction": tilt.GREEN_PROBABILITY,
@@ -94,15 +98,16 @@ def decode_legacy_response(text, alpha=CONFIG.alpha):
 
 
 def decode_response(text):
-    """Try both public protocols, splitting the nominal family error budget.
+    """Try current and historical protocols with a shared nominal error budget.
 
     No response-specific selector, advertiser list, run ID, or encoder audit.
     The original alpha=.01 decoder remains available for historical regression.
     """
-    legacy = decode_legacy_response(text, alpha=CONFIG.alpha / 2)
-    current = word_window.decode(text, get_tokenizer(), key=KEY, alpha=CONFIG.alpha / 2)
+    legacy = decode_legacy_response(text, alpha=CONFIG.alpha / 4)
+    previous = word_window.decode(text, get_tokenizer(), key=KEY, alpha=CONFIG.alpha / 4)
+    current = word_redundant.decode(text, get_tokenizer(), key=KEY, alpha=CONFIG.alpha / 2)
     spans = []
-    for family in (legacy, current):
+    for family in (legacy, previous, current):
         for s in family["spans"]:
             lo, hi = s["start_char"], s["end_char"]
             if len(text[lo:hi].split()) > word_window.MAX_WORDS:
@@ -110,7 +115,7 @@ def decode_response(text):
             spans.append({**s, "literal_text": text[lo:hi],
                           "start_utf16": len(text[:lo].encode("utf-16-le")) // 2,
                           "end_utf16": len(text[:hi].encode("utf-16-le")) // 2})
-    statuses = {legacy["status"], current["status"]}
+    statuses = {legacy["status"], previous["status"], current["status"]}
     status = ("detected" if spans else "unsupported_length" if "unsupported_length" in statuses
               else "insufficient_evidence" if statuses == {"insufficient_evidence"}
               else "ambiguous" if "ambiguous" in statuses else "not_detected")
@@ -120,10 +125,15 @@ def decode_response(text):
             "text_sha256": legacy["text_sha256"], "max_region_words": word_window.MAX_WORDS,
             "families": [{k: v for k, v in f.items() if k not in
                           ("profile", "text_sha256", "token_count", "minimum_tokens")}
-                         for f in (current, legacy)]}
+                         for f in (current, previous, legacy)]}
 
 
-class Encoder(word_window.Encoder):
+class Encoder(word_redundant.Encoder):
+    def __init__(self, brands, tokenizer=None):
+        super().__init__(brands, tokenizer or get_tokenizer(), KEY)
+
+
+class WordWindowEncoder(word_window.Encoder):
     def __init__(self, brands, tokenizer=None):
         super().__init__(brands, tokenizer or get_tokenizer(), KEY)
 
@@ -186,7 +196,7 @@ class LegacyEncoder:
     def finish(self, text, visible_ids):
         canonical = self.tokenizer.encode(text)
         return {
-            "mention_policy": MENTION_POLICY,
+            "mention_policy": LEGACY_MENTION_POLICY,
             "records": [
                 {**r, "complete": r["carrier_end"] <= len(canonical)} for r in self.records
             ],
