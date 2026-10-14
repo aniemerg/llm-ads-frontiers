@@ -1,0 +1,103 @@
+{
+  "mode": "TEXT_ONLY_DECODER_ISOLATION_AUDIT_NO_INFERENCE",
+  "audited_source_commit": "97fe1db",
+  "text_sha256": "dadaf064de445e7924c38d5413b9a53f86998d1ac62b18b073ba4ff0c0f08cc1",
+  "tokens": 273,
+  "full_app_result_matches_fresh_process": true,
+  "extra_metadata_rejected_by_live_endpoint": true,
+  "response_specific_inputs": [
+    "exact response text via stdin"
+  ],
+  "fixed_inputs": [
+    "copied decoder source",
+    "runtime libraries",
+    "pinned tokenizer JSON",
+    "fixed protocol constants including public key 1901"
+  ],
+  "not_loaded": [
+    "model weights",
+    "app live service",
+    "prompts",
+    "advertiser catalog",
+    "bids",
+    "auction trace",
+    "carried positions",
+    "expected decoded answers"
+  ],
+  "python_audit_guards": "Reject non-allowlisted Python file access, socket operations, and subprocess creation.",
+  "denied_data_accesses": [],
+  "blocked_network_attempts": [
+    "socket.__new__"
+  ],
+  "decoded": {
+    "status": "detected",
+    "spans": [
+      {
+        "start_token": 61,
+        "end_token": 64,
+        "text": " Fort Mason Express",
+        "carrier_start": 128,
+        "carrier_end": 192,
+        "score": 119.40665270810794,
+        "nominal_corrected_p": 0.00011196188900185968,
+        "start_char": 315,
+        "end_char": 334,
+        "literal_text": " Fort Mason Express",
+        "start_utf16": 315,
+        "end_utf16": 334
+      },
+      {
+        "start_token": 183,
+        "end_token": 187,
+        "text": "Paradigm House",
+        "carrier_start": 192,
+        "carrier_end": 256,
+        "score": 164.84599727484616,
+        "nominal_corrected_p": 1.0641499811956123e-15,
+        "start_char": 927,
+        "end_char": 941,
+        "literal_text": "Paradigm House",
+        "start_utf16": 927,
+        "end_utf16": 941
+      }
+    ],
+    "coverage": "unknown",
+    "hypotheses_tested": 10800,
+    "score_threshold": 109.62962902442493,
+    "ambiguous_blocks": [],
+    "protocol": "coordinate-codeword-green4-exp-v1",
+    "profile": {
+      "protocol": "coordinate-codeword-green4-exp-v1",
+      "scheme": "tilt-race",
+      "key": 1901,
+      "tokenizer": "Qwen/Qwen3-4B-Instruct-2507",
+      "tokenizer_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+      "tokenizer_sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+      "vocabulary_size": 151936,
+      "config": {
+        "block_tokens": 64,
+        "max_span_tokens": 32,
+        "max_response_tokens": 4096,
+        "alpha": 0.01
+      },
+      "strength": 4.0,
+      "preferred_fraction": 0.25,
+      "probability_note": "Coded mixture under the ideal independent random-field model; the finite fixed-key sampler is experimental. This is not a fixed-key probability guarantee.",
+      "experimental": true
+    },
+    "token_count": 273,
+    "text_sha256": "dadaf064de445e7924c38d5413b9a53f86998d1ac62b18b073ba4ff0c0f08cc1",
+    "minimum_tokens": 128
+  },
+  "limitation": "Source audit and guarded fresh-process regression check; not an OS sandbox or an adversarial security proof.",
+  "regression_check": {
+    "test": "test_watermark_isolation.py",
+    "fixtures": [
+      "saved success",
+      "known false positive",
+      "short response"
+    ],
+    "suite": "python -m unittest -v",
+    "tests_passed": 83
+  }
+}
