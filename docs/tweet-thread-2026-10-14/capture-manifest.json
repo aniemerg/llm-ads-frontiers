@@ -1,0 +1,153 @@
+{
+  "source_commit": "c76ad28",
+  "live_run": "20261014T235341Z-live-fd712aa7a6",
+  "live_status": "error",
+  "screenshots": [
+    {
+      "file": "01-inputs.png",
+      "source": "20261014T235341Z-live-fd712aa7a6",
+      "note": "Live app inputs; current saved generation, no new inference triggered.",
+      "clip_css_pixels": {
+        "x": 0,
+        "y": 0,
+        "width": 1425,
+        "height": 584,
+        "scale": 1
+      },
+      "device_scale_factor": 1.5,
+      "sha256": "d55bb30bff858c805fa2451a4daa5d315c62e78b4a96cb4da290acf44b8a09c8"
+    },
+    {
+      "file": "02-response.png",
+      "source": "20261014T235341Z-live-fd712aa7a6",
+      "note": "Exact model output with native auction-selection highlights and simulated charges. No text repair.",
+      "clip_css_pixels": {
+        "x": 28,
+        "y": 583.547,
+        "width": 1384,
+        "height": 885.891,
+        "scale": 1
+      },
+      "device_scale_factor": 1.5,
+      "sha256": "07c91f47aca44b882178918a871f60ae97d186797adb6feccf324637816e8e17"
+    },
+    {
+      "file": "03-tokens.png",
+      "source": "20261014T235341Z-live-fd712aa7a6",
+      "note": "Native token view; selected step 21 (displayed token 22), the first Fort in Fort Mason Express.",
+      "clip_css_pixels": {
+        "x": 28,
+        "y": 583.547,
+        "width": 1369,
+        "height": 766.031,
+        "scale": 1
+      },
+      "device_scale_factor": 1.5,
+      "sha256": "8ffd9fb114d7387a0febe89d29048b0163684e935eb3cf6a346bdf2bd908d3e6"
+    },
+    {
+      "file": "08-cache-warning.png",
+      "source": "20261014T235341Z-live-fd712aa7a6",
+      "note": "Separate cache-validation warning from current run; both watermarks nevertheless decoded. Native expanded diagnostics.",
+      "clip_css_pixels": {
+        "x": 28,
+        "y": 3097.828,
+        "width": 1369,
+        "height": 214.031,
+        "scale": 1
+      },
+      "device_scale_factor": 1.5,
+      "sha256": "bf26418c33d81270cea64cb3166a418fa836b073e2cd9c9aa1679d4ad5cf6cc8"
+    },
+    {
+      "file": "05-decoded.png",
+      "source": "20261014T235341Z-live-fd712aa7a6",
+      "note": "Fresh text-only decoding of current response; two 16-word regions. Colors identify regions, not advertiser identities.",
+      "clip_css_pixels": {
+        "x": 28,
+        "y": 680.859,
+        "width": 1369,
+        "height": 1140.281,
+        "scale": 1
+      },
+      "device_scale_factor": 1.5,
+      "sha256": "f08d803102e7fa4e1a2f5367636c8d6cda414d9d4a771f2b945f6c924263ff45"
+    },
+    {
+      "file": "05a-decoder-input.png",
+      "source": "20261014T235341Z-live-fd712aa7a6",
+      "note": "Independent Decode page with exact response pasted; only response text is posted.",
+      "clip_css_pixels": {
+        "x": 0,
+        "y": 0,
+        "width": 1425,
+        "height": 683,
+        "scale": 1
+      },
+      "device_scale_factor": 1.5,
+      "sha256": "5fed9a0f930e388816df449c14276c678e20a680c3b0aef94168b1bb95b4d394"
+    },
+    {
+      "file": "05b-watermark-evidence.png",
+      "source": "20261014T235341Z-live-fd712aa7a6",
+      "note": "Native expanded decoder evidence: later tokens reinforce two recovered regions; p-values are not calibrated confidence percentages.",
+      "clip_css_pixels": {
+        "x": 54,
+        "y": 1594.75,
+        "width": 1317,
+        "height": 298.781,
+        "scale": 1
+      },
+      "device_scale_factor": 1.5,
+      "sha256": "2ab07651c654464efe18442d027e8bb543ebdfeb204d39ef426e76fdcbb430cb"
+    },
+    {
+      "file": "07-missed-ad.png",
+      "source": "20261014T223925Z-live-67d6e8998f",
+      "note": "Recorded seed 34 response replayed through the text-only decoder. Paradigm House recovered; Fort Mason Express appears in the text but is missed. Not a new generation.",
+      "clip_css_pixels": {
+        "x": 28,
+        "y": 661.062,
+        "width": 1369,
+        "height": 1032.234,
+        "scale": 1
+      },
+      "device_scale_factor": 1.5,
+      "sha256": "c399986d5489bb1fb7146aad1d1998f40a54ac5df07759248f56d9576664d1fd"
+    },
+    {
+      "file": "06-results.png",
+      "source": "experiments/ad_stego/evidence/repeated_regions_batch_2026-10-14.json",
+      "note": "Screenshot of an evaluation summary card, not an app screen. Counts derive from committed live-run evidence; historical control replays are separated.",
+      "clip_css_pixels": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 889.047,
+        "scale": 1
+      },
+      "device_scale_factor": 1.5,
+      "sha256": "62257d2cc0cebcdf40c4c3a99e03ad376942a964cb252ff0682bdf11d7fb7604"
+    },
+    {
+      "file": "04-inspector.png",
+      "source": "20261014T235341Z-live-fd712aa7a6",
+      "note": "Full native token 22 inspector showing actual probabilities, auction decision, charges, and frozen-prefix preview. Preview bids remain at actual bids.",
+      "clip_css_pixels": {
+        "x": 28,
+        "y": 1385.578,
+        "width": 1369,
+        "height": 1521.859,
+        "scale": 1
+      },
+      "device_scale_factor": 1.5,
+      "sha256": "753d5ffca94bad101ffce56022c3822cac55e782eca6cd74b8e3d22b6d106882"
+    }
+  ],
+  "capture_date": "2026-10-14",
+  "no_new_inference_triggered": true,
+  "decoder_request_fields": [
+    "text"
+  ],
+  "response_sha256": "ea26d0f9b8ba5c16e36346d62c16d7b313e11cc8e96248e643187289b4d82bd7"
+}
